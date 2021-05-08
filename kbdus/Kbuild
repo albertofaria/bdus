@@ -1,0 +1,12 @@
+# ---------------------------------------------------------------------------- #
+
+obj-m := kbdus.o
+
+srcfiles := $(shell find $(src)/src -type f -name '*.c' -printf 'src/%P\n')
+kbdus-y  := $(srcfiles:.c=.o)
+
+ccflags-y := \
+-Werror -Wall -Wextra -Wno-unused -Wno-undef -Wno-unused-but-set-variable \
+-O2 -I$(src)/include -I$(src)/include-private -DKBDUS_DEBUG=$(DEBUG)
+
+# ---------------------------------------------------------------------------- #

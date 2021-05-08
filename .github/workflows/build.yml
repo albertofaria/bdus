@@ -1,0 +1,296 @@
+# ---------------------------------------------------------------------------- #
+
+name: build  # the name is mostly to look good on the status badge
+on: [push, pull_request]
+
+jobs:
+
+  check-code-formatting:
+
+    name: Check code formatting
+
+    runs-on: ubuntu-20.04
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 14
+
+      - name: Install clang-format
+        run: npm install -g clang-format@1.5.0
+
+      - name: Check formatting
+        run: |
+          set -o pipefail
+          find . -name '*.[ch]' |
+              xargs clang-format --style=file --dry-run --Werror
+
+  check-version-coherence:
+
+    name: Check version coherence
+
+    runs-on: ubuntu-20.04
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Check if version numbers are coherent
+        run: |
+
+          function get_header_version() {
+            local major minor patch
+            major="$( grep -Po '#define K?BDUS_HEADER_VERSION_MAJOR \K\d+' "$1" )"
+            minor="$( grep -Po '#define K?BDUS_HEADER_VERSION_MINOR \K\d+' "$1" )"
+            patch="$( grep -Po '#define K?BDUS_HEADER_VERSION_PATCH \K\d+' "$1" )"
+            echo "${major}.${minor}.${patch}"
+          }
+
+          kbdus_version="$( get_header_version kbdus/include/kbdus.h )"
+          libbdus_version="$( get_header_version libbdus/include/bdus.h )"
+
+          [[ "${kbdus_version}" = "${libbdus_version}" ]] || {
+            >&2 echo Versions in kbdus.h and bdus.h differ; exit 1
+          }
+
+          pattern='(?!'"${libbdus_version}"')(?<!Linux )\d+\.\d+\.\d+'
+
+          grep_exit=0
+          grep -PR "${pattern}" README.md cmdbdus libbdus kbdus || grep_exit="$?"
+
+          (( grep_exit == 1 ))
+
+  build-documentation:
+
+    name: Build documentation
+
+    runs-on: ubuntu-20.04
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get install -y doxygen
+          pip3 install -r docs/requirements.txt
+
+      - name: Build HTML documentation
+        run: |
+          set -o pipefail
+          make -C docs html |&
+              tee /dev/stderr |
+              { ! grep -ci warn > /dev/null; }
+
+      - name: Check documentation links
+        run: |
+          set -o pipefail
+          make -C docs linkcheck |&
+              tee /dev/stderr |
+              { grep -i warn || true; } |
+              { ! grep -civ sphinx-version-warning > /dev/null; }
+
+  build-libbdus-and-cmdbdus:
+
+    name: Build libbdus and cmdbdus
+
+    runs-on: ubuntu-20.04
+
+    env:
+      CC: clang
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Build libbdus and cmdbdus
+        run: LIBBDUS_CFLAGS=-Werror CMDBDUS_CFLAGS=-Werror make libbdus bdus
+
+  build-kbdus:
+
+    name: Build kbdus on Linux ${{ matrix.linux }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        linux:
+          - '5.12'
+          - '5.11'
+          - '5.10'
+          - '5.9'
+          - '5.8'
+          - '5.7'
+          - '5.6'
+          - '5.5'
+          - '5.4'
+          - '5.3'
+          - '5.2'
+          - '5.1'
+          - '5.0'
+          - '4.20'
+          - '4.19'
+          - '4.18'
+          - '4.17'
+          - '4.16'
+          - '4.15'
+          - '4.14'
+          - '4.13'
+          - '4.12'
+          - '4.11'
+          - '4.10'
+          - '4.9'
+          - '4.8'
+          - '4.7'
+          - '4.6'
+          - '4.5'
+          - '4.4'
+          - '4.3'
+          - '4.2'
+          - '4.1'
+          - '4.0'
+
+    runs-on: ubuntu-16.04 # to avoid compiler version issues with older kernels
+
+    env:
+      CC: clang
+      LINUX: ${{ matrix.linux }}
+      SPARSE: '0.6.2'
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Sparse build cache
+        id: cache-sparse
+        uses: actions/cache@v2
+        with:
+          path: ~/sparse-${{ env.SPARSE }}
+          key: sparse-${{ env.SPARSE }}
+
+      - name: Set up Linux build cache
+        id: cache-linux
+        uses: actions/cache@v2
+        with:
+          path: ~/linux-${{ env.LINUX }}
+          key: linux-${{ env.LINUX }}
+
+      - name: Install dependencies
+        run: sudo apt-get install -y bc libelf-dev
+
+      - name: Build Sparse
+        if: steps.cache-sparse.outputs.cache-hit != 'true'
+        run: |
+          set -o pipefail
+          curl -LsS https://mirrors.edge.kernel.org/pub/software/devel/sparse/dist/sparse-${SPARSE}.tar.xz |
+              tar -C ~ -xJf -
+          make -C ~/sparse-${SPARSE} -j $(nproc) sparse
+
+      - name: Build Linux
+        if: steps.cache-linux.outputs.cache-hit != 'true'
+        run: |
+          set -o pipefail
+          curl -LsS https://cdn.kernel.org/pub/linux/kernel/v${LINUX:0:1}.x/linux-${LINUX}.tar.xz |
+              tar -C ~ -xJf -
+          make -C ~/linux-${LINUX} -j $(nproc) defconfig vmlinux modules clean
+
+      - name: Build kbdus
+        run: |
+          set -o pipefail
+          export PATH=~/sparse-${SPARSE}:"${PATH}"
+          export KBDUS_KDIR=~/linux-${LINUX}
+          export KBDUS_SPARSE=1
+          export KBDUS_DEBUG
+          for KBDUS_DEBUG in 0 1; do
+              make clean kbdus.ko |&
+                  tee /dev/stderr |
+                  { grep -i warn || true; } |
+                  { ! grep -cFiv './include/linux/slab.h:332:43: warning: dubious: x & !y' > /dev/null; }
+          done
+
+  gather-tests:
+
+    name: Gather tests
+
+    outputs:
+      tests: ${{ steps.gather-tests.outputs.tests }}
+
+    runs-on: ubuntu-20.04
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Gather tests from repository
+        id: gather-tests
+        run: |
+          joined_tests="$( cd tests && printf ',"%s"' bash/* c/* )"
+          echo "::set-output name=tests::[${joined_tests:1}]"
+
+  run-tests:
+
+    needs: gather-tests
+
+    name: Run test ${{ matrix.test }} on Ubuntu ${{ matrix.ubuntu }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        test: ${{ fromJson(needs.gather-tests.outputs.tests) }}
+        ubuntu:
+          - '20.04'
+          - '16.04'
+
+    runs-on: ubuntu-${{ matrix.ubuntu }}
+
+    env:
+      FIO: '3.25'
+      TEST: ${{ matrix.test }}
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up fio build cache
+        id: cache-fio
+        uses: actions/cache@v2
+        with:
+          path: ~/fio-fio-${{ env.FIO }}/fio
+          key: fio-${{ env.FIO }}-ubuntu-${{ matrix.ubuntu }}
+
+      - name: Install dependencies
+        run: sudo apt-get install -y "linux-headers-$(uname -r)" libaio-dev
+
+      - name: Build fio
+        if: steps.cache-fio.outputs.cache-hit != 'true'
+        run: |
+          set -o pipefail
+          curl -LsS https://github.com/axboe/fio/archive/fio-${FIO}.tar.gz |
+              tar -C ~ -xzf -
+          cd ~/fio-fio-${FIO}
+          # not all GitHub Actions VMs have the same ISA extensions
+          ./configure --disable-native
+          make
+
+      - name: Run test
+        run: |
+          sudo CC=clang KBDUS_DEBUG=1 make install clean
+          sudo CC=clang PATH=~/fio-fio-${FIO}:"${PATH}" \
+              tests/run.bash "tests/${TEST}"
+
+# ---------------------------------------------------------------------------- #

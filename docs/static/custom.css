@@ -1,0 +1,201 @@
+/* -------------------------------------------------------------------------- */
+/* separators before second-level headings */
+
+div.body h2::before {
+  content: '';
+  display: block;
+  border: 1px solid #b1b4b6;
+  margin-bottom: 21px;
+}
+
+/* -------------------------------------------------------------------------- */
+/* make admonitions smaller */
+
+div.admonition p {
+    display: inline;
+}
+
+div.admonition p.admonition-title {
+    font-family: inherit;
+    font-weight: bold;
+    font-size: inherit;
+}
+
+/* -------------------------------------------------------------------------- */
+/* prevent weird too-much-to-the-left bullets on mobile */
+
+ul {
+  margin-left: 30px;
+}
+
+/* -------------------------------------------------------------------------- */
+/* center usually right-aligned images when the screen is too small */
+
+@media screen and (max-width: 500px) {
+
+  div.figure.align-left, div.figure.align-right {
+    float: unset;
+    margin: 0;
+    text-align: center;
+  }
+
+}
+
+/* -------------------------------------------------------------------------- */
+/* prevent horizontal scrolling */
+
+@media screen and (min-width: 876px) {
+
+  div.document {
+    width: unset;
+    max-width: 1000px;
+  }
+
+  div.related.bottom {
+    width: calc(100% - 30px);
+  }
+
+  div.footer {
+    width: unset;
+    max-width: calc(1000px - 30px);
+    padding-right: 30px;
+  }
+
+}
+
+/* -------------------------------------------------------------------------- */
+/* add scrolling to fixed sidebar when necessary */
+
+@media screen and (min-width: 876px) {
+
+  div.sphinxsidebar {
+    max-height: calc(100% - 30px);
+    overflow-x: hidden;
+    padding-left: 15px; /* a bit of space on the left */
+  }
+
+  div.bodywrapper {
+    margin-left: calc(220px + 15px); /* due to the bit of space on the left */
+  }
+
+}
+
+/* -------------------------------------------------------------------------- */
+/* mobile navigation bar fixes */
+
+@media screen and (max-width: 875px) {
+
+  div.body {
+    min-width: unset;
+    word-break: break-word;
+  }
+
+  div.sphinxsidebar {
+    width: calc(100% + 20px);
+    padding-top: 0;
+  }
+
+}
+
+/* -------------------------------------------------------------------------- */
+/* API reference */
+
+dl.enum > dd > dl.enumerator > dt > em.property {
+  display: none;
+}
+
+dl.union > dd > em:first-child {
+    display: none;
+}
+
+dl.union > dd > p:first-child {
+    margin-top: 0;
+}
+
+dl.macro > dt:first-child::before {
+  content: '#define ';
+}
+
+dl.struct > dd > div > dl.var {
+  margin-bottom: 15px;
+}
+
+dl.function + dl.macro + dl.macro + dl.macro + dl.macro::before,
+p           + dl.define::before,
+p           + dl.enum::before,
+p           + dl.function::before,
+p           + dl.macro::before,
+p           + dl.struct::before,
+p           + dl.union::before,
+dl.define   + p::before,
+dl.define   + dl.define::before,
+dl.define   + dl.enum::before,
+dl.define   + dl.function::before,
+dl.define   + dl.macro::before,
+dl.define   + dl.struct::before,
+dl.define   + dl.union::before,
+dl.enum     + p::before,
+dl.enum     + dl.define::before,
+dl.enum     + dl.enum::before,
+dl.enum     + dl.function::before,
+dl.enum     + dl.macro::before,
+dl.enum     + dl.struct::before,
+dl.enum     + dl.union::before,
+dl.function + p::before,
+dl.function + dl.define::before,
+dl.function + dl.enum::before,
+dl.function + dl.function::before,
+dl.function + dl.macro::before,
+dl.function + dl.struct::before,
+dl.function + dl.union::before,
+dl.macro    + p::before,
+dl.macro    + dl.define::before,
+dl.macro    + dl.enum::before,
+dl.macro    + dl.function::before,
+/* dl.macro    + dl.macro::before, */
+dl.macro    + dl.struct::before,
+dl.macro    + dl.union::before,
+dl.struct   + p::before,
+dl.struct   + dl.define::before,
+dl.struct   + dl.enum::before,
+dl.struct   + dl.function::before,
+dl.struct   + dl.macro::before,
+dl.struct   + dl.struct::before,
+dl.struct   + dl.union::before,
+dl.union    + p::before,
+dl.union    + dl.define::before,
+dl.union    + dl.enum::before,
+dl.union    + dl.function::before,
+dl.union    + dl.macro::before,
+dl.union    + dl.struct::before,
+dl.union    + dl.union::before {
+  content: '';
+  display: block;
+  border-width: 1px;
+  border-style: dotted none none none;
+  border-color: #b1b4b6;
+  margin: 1.1em 0 1em 0;
+}
+
+/* -------------------------------------------------------------------------- */
+/* version warning banner */
+
+#version-warning-banner {
+  position: sticky;
+  top: 0;
+  padding: 8px;
+  border-bottom: 1px solid #CCC;
+  background-color: #FFF59C;
+  text-align: center;
+}
+
+@media screen and (max-width: 875px) {
+
+  #version-warning-banner {
+    width: calc(100% + 30px + 30px - 8px - 8px);
+    margin: -20px -30px 20px -30px;
+  }
+
+}
+
+/* -------------------------------------------------------------------------- */
