@@ -47,7 +47,7 @@ More specifically, it enables you to implement block device drivers as regular u
   <dt>Contributing</dt>
   <dd>
     To report bugs, suggest improvements, or propose new features, please use GitHub's <a href="https://github.com/albertofaria/bdus/issues">issue tracking system</a>.
-    For information on how to contribute changes, see <a href="https://bdus.readthedocs.io/en/v0.1.0/developer-manual.html#contributing">Contributing</a>.
+    For information on how to contribute changes, see <a href="https://bdus.readthedocs.io/en/v0.1.0/developer-manual/contributing.html">Contributing</a>.
   </dd>
 
 </dl>
