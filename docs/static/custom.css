@@ -98,6 +98,16 @@ ul {
 }
 
 /* -------------------------------------------------------------------------- */
+/* code cross-reference links */
+
+code.xref {
+    background-color: #ecf0f3;
+    border-bottom: unset;
+    color: unset;
+    font-weight: unset;
+}
+
+/* -------------------------------------------------------------------------- */
 /* API reference */
 
 dl.enum > dd > dl.enumerator > dt > em.property {
