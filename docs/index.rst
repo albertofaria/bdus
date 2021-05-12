@@ -5,8 +5,8 @@ BDUS: Block Devices in User Space
 
 |build-badge| |version-badge| |license-badge|
 
-BDUS is a Linux 4.0+ framework for developing **block devices in user space**.
-More specifically, it enables you to implement block device drivers as regular user-space programs written in C.
+BDUS is a Linux 4.0+ framework for implementing **block devices in user space**, enabling you to create block device drivers as regular C programs.
+It was introduced by the SYSTOR '21 paper `"BDUS: Implementing Block Devices in User Space" <https://doi.org/10.1145/3456727.3463768>`_.
 
 This is the entry page for BDUS' documentation, which is divided into three parts:
 
@@ -28,6 +28,10 @@ You might also be looking for the :ref:`api-reference`.
 **Contributing**
     To report bugs, suggest improvements, or propose new features, please use GitHub's `issue tracking system <https://github.com/albertofaria/bdus/issues>`_.
     For information on how to contribute changes, see :ref:`contributing`.
+
+**Citing**
+  When citing BDUS, please reference:
+  `Alberto Faria, Ricardo Macedo, José Pereira, João Paulo. 2021. BDUS: Implementing Block Devices in User Space. In Proceedings of the 14th ACM International Conference on Systems and Storage (SYSTOR '21). <https://doi.org/10.1145/3456727.3463768>`_
 
 .. .......................................................................... ..
 
