@@ -498,7 +498,6 @@ struct kbdus_transceiver *kbdus_transceiver_create(
     struct kbdus_inverter *inverter)
 {
     struct kbdus_transceiver *transceiver;
-    size_t max_request_size;
 
     // allocate transceiver struct
 

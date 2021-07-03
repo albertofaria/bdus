@@ -485,7 +485,6 @@ static enum blk_eh_timer_return
 static void kbdus_device_mq_ops_complete_(struct request *req)
 {
     struct kbdus_inverter_pdu *pdu;
-    int sane_error;
 
     pdu = blk_mq_rq_to_pdu(req);
 
@@ -821,9 +820,6 @@ error:
 
 void kbdus_device_destroy(struct kbdus_device *device)
 {
-    int i;
-    struct gendisk *disk;
-
     // terminate inverter (which fails all pending and future requests)
 
     kbdus_inverter_terminate(device->inverter);

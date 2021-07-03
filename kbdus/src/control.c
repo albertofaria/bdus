@@ -974,7 +974,6 @@ static int kbdus_control_ioctl_flush_device_(const u64 __user *id_usrptr)
 {
     u64 id;
     struct kbdus_control_device_wrapper_ *device_wrapper;
-    struct kbdus_device_config *device_config;
     struct block_device *bdev;
     int ret;
 
