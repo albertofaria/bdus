@@ -400,7 +400,7 @@ static int subcommand_version(char **args, int num_args)
         }
 
         fprintf(
-            stdout, "kbdus %" PRIu32 ".%" PRIu32 ".%" PRIu32 "\n",
+            stdout, "kbdus   %" PRIu32 ".%" PRIu32 ".%" PRIu32 "\n",
             kbdus_ver.major, kbdus_ver.minor, kbdus_ver.patch);
     }
 
