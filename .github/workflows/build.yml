@@ -246,17 +246,14 @@ jobs:
 
     needs: gather-tests
 
-    name: Run test ${{ matrix.test }} on Ubuntu ${{ matrix.ubuntu }}
+    name: Run test ${{ matrix.test }}
 
     strategy:
       fail-fast: false
       matrix:
         test: ${{ fromJson(needs.gather-tests.outputs.tests) }}
-        ubuntu:
-          - '20.04'
-          - '16.04'
 
-    runs-on: ubuntu-${{ matrix.ubuntu }}
+    runs-on: ubuntu-20.04
 
     env:
       FIO: '3.25'
@@ -272,7 +269,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/fio-fio-${{ env.FIO }}/fio
-          key: fio-${{ env.FIO }}-ubuntu-${{ matrix.ubuntu }}
+          key: fio-${{ env.FIO }}
 
       - name: Install dependencies
         run: sudo apt-get install -y "linux-headers-$(uname -r)" libaio-dev
