@@ -6,7 +6,7 @@ srcfiles := $(shell find $(src)/src -type f -name '*.c' -printf 'src/%P\n')
 kbdus-y  := $(srcfiles:.c=.o)
 
 ccflags-y := \
--Werror -Wall -Wextra -O2 -DKBDUS_DEBUG=$(DEBUG) \
+-Wall -Wextra -O2 -DKBDUS_DEBUG=$(DEBUG) \
 -I$(src)/include -I$(src)/include-private
 
 # NOTE: We replace -I with -isystem in the options that include kernel headers
