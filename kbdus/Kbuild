@@ -6,7 +6,12 @@ srcfiles := $(shell find $(src)/src -type f -name '*.c' -printf 'src/%P\n')
 kbdus-y  := $(srcfiles:.c=.o)
 
 ccflags-y := \
--Werror -Wall -Wextra -Wno-unused -Wno-undef -Wno-unused-but-set-variable \
--O2 -I$(src)/include -I$(src)/include-private -DKBDUS_DEBUG=$(DEBUG)
+-Werror -Wall -Wextra -O2 -DKBDUS_DEBUG=$(DEBUG) \
+-I$(src)/include -I$(src)/include-private
+
+# NOTE: We replace -I with -isystem in the options that include kernel headers
+# to suppress warnings originating from them.
+
+LINUXINCLUDE := $(subst -I, -isystem , $(LINUXINCLUDE))
 
 # ---------------------------------------------------------------------------- #
