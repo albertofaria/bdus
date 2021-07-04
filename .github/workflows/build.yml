@@ -216,7 +216,7 @@ jobs:
           export PATH=~/sparse-${SPARSE}:"${PATH}"
           export KBDUS_KDIR=~/linux-${LINUX}
           export KBDUS_SPARSE=1
-          flags='-fno-PIE -fno-stack-protector'
+          flags='-fno-PIE -fno-stack-protector -Werror'
           make CC=gcc-5 KBDUS_DEBUG=0 KCFLAGS="${flags}" kbdus.ko clean
           make CC=gcc-5 KBDUS_DEBUG=1 KCFLAGS="${flags}" kbdus.ko clean
 
