@@ -177,7 +177,7 @@ static struct kbdus_control_device_wrapper_ *
     kbdus_control_get_device_wrapper_by_id_(u64 id)
 {
     struct kbdus_control_device_wrapper_ *device_wrapper;
-    unsigned int index;
+    int index;
 
     if (id >= kbdus_control_next_id_)
         return ERR_PTR(-EINVAL); // device never existed
@@ -211,7 +211,7 @@ static void kbdus_control_destroy_device_(
 
     --kbdus_control_num_devices_;
 
-    idr_remove(&kbdus_control_devices_, (unsigned long)device_wrapper->index);
+    idr_remove(&kbdus_control_devices_, device_wrapper->index);
     wake_up_all_locked(&kbdus_control_device_destroyed_);
 
     spin_unlock(&kbdus_control_device_destroyed_.lock);
@@ -483,8 +483,7 @@ static int __kbdus_control_ioctl_create_device_(
     ++kbdus_control_next_id_;
     ++kbdus_control_num_devices_;
 
-    prev_ptr = idr_replace(
-        &kbdus_control_devices_, device_wrapper, (unsigned long)index);
+    prev_ptr = idr_replace(&kbdus_control_devices_, device_wrapper, index);
 
     spin_unlock(&kbdus_control_device_destroyed_.lock);
 
@@ -502,7 +501,7 @@ out_destroy_device:
 out_free_device_wrapper:
     kfree(device_wrapper);
 out_remove_idr:
-    idr_remove(&kbdus_control_devices_, (unsigned long)index);
+    idr_remove(&kbdus_control_devices_, index);
     return ret;
 }
 
@@ -883,9 +882,8 @@ static int kbdus_control_ioctl_device_path_to_id_(
 
     // get device wrapper
 
-    device_wrapper = idr_find(
-        &kbdus_control_devices_,
-        (unsigned long)(MINOR(stat.rdev) / (u32)DISK_MAX_PARTS));
+    device_wrapper =
+        idr_find(&kbdus_control_devices_, MINOR(stat.rdev) / DISK_MAX_PARTS);
 
     if (!device_wrapper)
     {
@@ -1302,7 +1300,7 @@ error:
 void kbdus_control_exit(void)
 {
     struct kbdus_control_device_wrapper_ *device_wrapper;
-    unsigned int index;
+    int index;
 
     // destroy remaining devices
 
