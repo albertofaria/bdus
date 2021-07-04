@@ -163,10 +163,9 @@ jobs:
           - '4.1'
           - '4.0'
 
-    runs-on: ubuntu-16.04 # to avoid compiler version issues with older kernels
+    runs-on: ubuntu-18.04  # so we can install GCC 5 through apt
 
     env:
-      CC: clang
       LINUX: ${{ matrix.linux }}
       SPARSE: '0.6.2'
 
@@ -180,17 +179,17 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/sparse-${{ env.SPARSE }}
-          key: sparse-${{ env.SPARSE }}
+          key: sparse-${{ env.SPARSE }}-gcc-5
 
       - name: Set up Linux build cache
         id: cache-linux
         uses: actions/cache@v2
         with:
           path: ~/linux-${{ env.LINUX }}
-          key: linux-${{ env.LINUX }}
+          key: linux-${{ env.LINUX }}-gcc-5
 
       - name: Install dependencies
-        run: sudo apt-get install -y bc libelf-dev
+        run: sudo apt-get install -y bc gcc-5 libelf-dev
 
       - name: Build Sparse
         if: steps.cache-sparse.outputs.cache-hit != 'true'
@@ -198,7 +197,7 @@ jobs:
           set -o pipefail
           curl -LsS https://mirrors.edge.kernel.org/pub/software/devel/sparse/dist/sparse-${SPARSE}.tar.xz |
               tar -C ~ -xJf -
-          make -C ~/sparse-${SPARSE} -j $(nproc) sparse
+          make -C ~/sparse-${SPARSE} -j $(nproc) CC=gcc-5 sparse
 
       - name: Build Linux
         if: steps.cache-linux.outputs.cache-hit != 'true'
@@ -206,7 +205,10 @@ jobs:
           set -o pipefail
           curl -LsS https://cdn.kernel.org/pub/linux/kernel/v${LINUX:0:1}.x/linux-${LINUX}.tar.xz |
               tar -C ~ -xJf -
-          make -C ~/linux-${LINUX} -j $(nproc) defconfig vmlinux modules clean
+          flags='-fno-PIE -fno-stack-protector -w'
+          make -C ~/linux-${LINUX} -j $(nproc) \
+              CC=gcc-5 HOSTCC=gcc-5 KAFLAGS="${flags}" KCFLAGS="${flags}" \
+              defconfig vmlinux modules clean
 
       - name: Build kbdus
         run: |
@@ -214,13 +216,9 @@ jobs:
           export PATH=~/sparse-${SPARSE}:"${PATH}"
           export KBDUS_KDIR=~/linux-${LINUX}
           export KBDUS_SPARSE=1
-          export KBDUS_DEBUG
-          for KBDUS_DEBUG in 0 1; do
-              make clean kbdus.ko |&
-                  tee /dev/stderr |
-                  { grep -i warn || true; } |
-                  { ! grep -cFiv './include/linux/slab.h:332:43: warning: dubious: x & !y' > /dev/null; }
-          done
+          flags='-fno-PIE -fno-stack-protector'
+          make CC=gcc-5 KBDUS_DEBUG=0 KCFLAGS="${flags}" kbdus.ko clean
+          make CC=gcc-5 KBDUS_DEBUG=1 KCFLAGS="${flags}" kbdus.ko clean
 
   gather-tests:
 
