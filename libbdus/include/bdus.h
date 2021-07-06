@@ -103,6 +103,12 @@ struct bdus_ctx
      * value of this field.
      */
     void *private_data;
+
+    /** \brief The device's major number. */
+    const uint32_t major;
+
+    /** \brief The device's minor number. */
+    const uint32_t minor;
 };
 
 /**
@@ -790,6 +796,10 @@ bool bdus_run_0_1_0_(
     const struct bdus_ops *ops, const struct bdus_attrs *attrs,
     void *private_data);
 
+bool bdus_run_0_1_1_(
+    const struct bdus_ops *ops, const struct bdus_attrs *attrs,
+    void *private_data);
+
 /**
  * \brief Runs a driver for a new block device with the specified callbacks and
  *        attributes.
@@ -815,10 +825,14 @@ static inline bool bdus_run(
     const struct bdus_ops *ops, const struct bdus_attrs *attrs,
     void *private_data)
 {
-    return bdus_run_0_1_0_(ops, attrs, private_data);
+    return bdus_run_0_1_1_(ops, attrs, private_data);
 }
 
 bool bdus_rerun_0_1_0_(
+    uint64_t dev_id, const struct bdus_ops *ops, const struct bdus_attrs *attrs,
+    void *private_data);
+
+bool bdus_rerun_0_1_1_(
     uint64_t dev_id, const struct bdus_ops *ops, const struct bdus_attrs *attrs,
     void *private_data);
 
@@ -869,7 +883,7 @@ static inline bool bdus_rerun(
     uint64_t dev_id, const struct bdus_ops *ops, const struct bdus_attrs *attrs,
     void *private_data)
 {
-    return bdus_rerun_0_1_0_(dev_id, ops, attrs, private_data);
+    return bdus_rerun_0_1_1_(dev_id, ops, attrs, private_data);
 }
 
 /* -------------------------------------------------------------------------- */

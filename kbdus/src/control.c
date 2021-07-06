@@ -432,6 +432,9 @@ static int __kbdus_control_ioctl_create_device_(
 
     config->device.id = kbdus_control_next_id_;
 
+    config->device.major = kbdus_device_get_major();
+    config->device.minor = (u32)(index * DISK_MAX_PARTS);
+
     // copy modified configuration back to user space
 
     if (copy_to_user(config_usrptr, config, sizeof(*config)) != 0)
@@ -456,8 +459,7 @@ static int __kbdus_control_ioctl_create_device_(
 
     // create device
 
-    device_wrapper->device =
-        kbdus_device_create(&config->device, index * DISK_MAX_PARTS);
+    device_wrapper->device = kbdus_device_create(&config->device);
 
     if (IS_ERR(device_wrapper->device))
     {

@@ -86,8 +86,8 @@ int kbdus_device_validate_and_adjust_config(struct kbdus_device_config *config);
  *
  * SLEEPING: This function might sleep.
  */
-struct kbdus_device *kbdus_device_create(
-    const struct kbdus_device_config *config, int first_minor);
+struct kbdus_device *
+    kbdus_device_create(const struct kbdus_device_config *config);
 
 /**
  * \brief Destroys a device.

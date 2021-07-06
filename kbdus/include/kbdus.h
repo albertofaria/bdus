@@ -327,7 +327,25 @@ struct kbdus_device_config
     uint8_t recoverable;
 
     /** \cond PRIVATE */
-    uint8_t reserved_[71];
+    uint8_t reserved_1_[3];
+    /** \endcond */
+
+    /**
+     * \brief The device's major number.
+     *
+     * Directionality: OUT on create.
+     */
+    uint32_t major;
+
+    /**
+     * \brief The device's minor number.
+     *
+     * Directionality: OUT on create.
+     */
+    uint32_t minor;
+
+    /** \cond PRIVATE */
+    uint8_t reserved_2_[60];
     /** \endcond */
 };
 

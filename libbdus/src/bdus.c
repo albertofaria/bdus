@@ -327,6 +327,8 @@ static bool bdus_execute_driver_(
         .attrs        = attrs,
         .is_rerun     = is_rerun,
         .private_data = private_data,
+        .major        = device_config->major,
+        .minor        = device_config->minor,
     };
 
     // log attribute adjustment
@@ -683,6 +685,13 @@ BDUS_EXPORT_ bool bdus_run_0_1_0_(
     // return success indication
 
     return success;
+}
+
+BDUS_EXPORT_ bool bdus_run_0_1_1_(
+    const struct bdus_ops *ops, const struct bdus_attrs *attrs,
+    void *private_data)
+{
+    return bdus_run_0_1_0_(ops, attrs, private_data);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -1058,6 +1067,13 @@ BDUS_EXPORT_ bool bdus_rerun_0_1_0_(
     // return success indication
 
     return success;
+}
+
+BDUS_EXPORT_ bool bdus_rerun_0_1_1_(
+    uint64_t dev_id, const struct bdus_ops *ops, const struct bdus_attrs *attrs,
+    void *private_data)
+{
+    return bdus_rerun_0_1_0_(dev_id, ops, attrs, private_data);
 }
 
 /* -------------------------------------------------------------------------- */

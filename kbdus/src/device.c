@@ -114,9 +114,11 @@ static bool
 
     // ensure that reserved space is zeroed out
 
-    static const char zero[sizeof(config->reserved_)];
+    static const char zero_1[sizeof(config->reserved_1_)];
+    static const char zero_2[sizeof(config->reserved_2_)];
 
-    valid = memcmp(config->reserved_, zero, sizeof(zero)) == 0;
+    valid = (memcmp(config->reserved_1_, zero_1, sizeof(zero_1)) == 0)
+        && (memcmp(config->reserved_2_, zero_2, sizeof(zero_2)) == 0);
 
     // operations -- supports_fua_write implies supports_flush
 
@@ -686,8 +688,8 @@ int kbdus_device_validate_and_adjust_config(struct kbdus_device_config *config)
     return 0;
 }
 
-struct kbdus_device *kbdus_device_create(
-    const struct kbdus_device_config *config, int first_minor)
+struct kbdus_device *
+    kbdus_device_create(const struct kbdus_device_config *config)
 {
     struct kbdus_device *device;
     int ret_error;
@@ -769,7 +771,7 @@ struct kbdus_device *kbdus_device_create(
         device->disk->flags |= GENHD_FL_NO_PART_SCAN;
 
     device->disk->major       = kbdus_device_major_;
-    device->disk->first_minor = (int)first_minor;
+    device->disk->first_minor = (int)config->minor;
     device->disk->fops        = &kbdus_device_ops_;
     device->disk->queue       = device->queue;
 
