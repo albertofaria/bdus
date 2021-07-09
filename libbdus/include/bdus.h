@@ -15,7 +15,7 @@
  * returned by `bdus_get_libbdus_version()`, which is only determined at run
  * time.
  */
-#define BDUS_HEADER_VERSION_PATCH 0
+#define BDUS_HEADER_VERSION_PATCH 1
 
 #if !defined(BDUS_REQUIRE_VERSION_MAJOR)                                       \
     && !defined(BDUS_REQUIRE_VERSION_MINOR)                                    \
@@ -50,9 +50,9 @@
 BDUS_REQUIRE_VERSION_MINOR, and BDUS_REQUIRE_VERSION_PATCH or none at all
 
 #elif BDUS_REQUIRE_VERSION_MAJOR != 0 || BDUS_REQUIRE_VERSION_MINOR != 1       \
-    || BDUS_REQUIRE_VERSION_PATCH > 0
+    || BDUS_REQUIRE_VERSION_PATCH > 1
 
-#error bdus.h has version 0.1.0 but incompatible version was required
+#error bdus.h has version 0.1.1 but incompatible version was required
 
 #error
 
@@ -104,11 +104,16 @@ struct bdus_ctx
      */
     void *private_data;
 
+#if BDUS_REQUIRE_VERSION_MAJOR == 0 && BDUS_REQUIRE_VERSION_MINOR == 1         \
+    && BDUS_REQUIRE_VERSION_PATCH == 1
+
     /** \brief The device's major number. */
     const uint32_t major;
 
     /** \brief The device's minor number. */
     const uint32_t minor;
+
+#endif
 };
 
 /**
@@ -825,7 +830,12 @@ static inline bool bdus_run(
     const struct bdus_ops *ops, const struct bdus_attrs *attrs,
     void *private_data)
 {
+#if BDUS_REQUIRE_VERSION_MAJOR == 0 && BDUS_REQUIRE_VERSION_MINOR == 1         \
+    && BDUS_REQUIRE_VERSION_PATCH == 1
     return bdus_run_0_1_1_(ops, attrs, private_data);
+#else
+    return bdus_run_0_1_0_(ops, attrs, private_data);
+#endif
 }
 
 bool bdus_rerun_0_1_0_(
@@ -883,7 +893,12 @@ static inline bool bdus_rerun(
     uint64_t dev_id, const struct bdus_ops *ops, const struct bdus_attrs *attrs,
     void *private_data)
 {
+#if BDUS_REQUIRE_VERSION_MAJOR == 0 && BDUS_REQUIRE_VERSION_MINOR == 1         \
+    && BDUS_REQUIRE_VERSION_PATCH == 1
     return bdus_rerun_0_1_1_(dev_id, ops, attrs, private_data);
+#else
+    return bdus_rerun_0_1_0_(dev_id, ops, attrs, private_data);
+#endif
 }
 
 /* -------------------------------------------------------------------------- */

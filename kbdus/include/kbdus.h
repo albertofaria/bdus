@@ -11,7 +11,7 @@
  * The three components of the version of the `kbdus.h` header file that was
  * included.
  */
-#define KBDUS_HEADER_VERSION_PATCH 0
+#define KBDUS_HEADER_VERSION_PATCH 1
 
 /* -------------------------------------------------------------------------- */
 

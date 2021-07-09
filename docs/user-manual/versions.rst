@@ -55,6 +55,16 @@ Version history
 
 The following is a list of all releases up to BDUS |version|, in reverse chronological order.
 
+0.1.1 (2021-07-09)
+~~~~~~~~~~~~~~~~~~
+
+The following is a list of notable changes relative to version 0.1.0.
+See also the :diff:`git diff <v0.1.0...v0.1.1>`.
+
+- *kbdus*: Expose the major and minor numbers of devices through fields :member:`kbdus_device_config.major` and :member:`kbdus_device_config.minor`.
+
+- *libbdus*: Expose the major and minor numbers of devices through fields :member:`bdus_ctx.major` and :member:`bdus_ctx.minor`.
+
 0.1.0 (2021-05-08)
 ~~~~~~~~~~~~~~~~~~
 
