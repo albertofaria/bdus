@@ -746,42 +746,6 @@ struct bdus_attrs
      * visible, since `stderr` is redirected to `/dev/null`.
      */
     bool log;
-
-    /** \cond PRIVATE */
-
-    /**
-     * \brief Whether the device is reported to the system as being rotational.
-     *
-     * This may have an influence on request scheduling.
-     *
-     * Note that this flag may be modified through sysfs after the device is
-     * created, and this field will *not* be updated to reflect that.
-     *
-     * When using `bdus_rerun()`, this attribute is ignored and its value in
-     * `ctx->attrs` as available from driver callbacks will be the value given
-     * by the device's original driver.
-     *
-     * Note that this field is *not* part of the library's public API, and as
-     * such no backward compatibility guarantees are provided.
-     */
-    bool rotational_;
-
-    /**
-     * \brief Whether request merging should *not* be performed by the kernel.
-     *
-     * Note that this flag may be modified through sysfs after the device is
-     * created, and this field will *not* be updated to reflect that.
-     *
-     * When using `bdus_rerun()`, this attribute is ignored and its value in
-     * `ctx->attrs` as available from driver callbacks will be the value given
-     * by the device's original driver.
-     *
-     * Note that this field is *not* part of the library's public API, and as
-     * such no backward compatibility guarantees are provided.
-     */
-    bool dont_merge_requests_;
-
-    /** \endcond */
 };
 
 enum

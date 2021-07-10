@@ -602,8 +602,8 @@ static bool bdus_run_impl_(
             .supports_secure_erase  = (ops_copy->secure_erase != NULL),
             .supports_ioctl         = (ops_copy->ioctl        != NULL),
 
-            .rotational             = attrs_copy->rotational_,
-            .merge_requests         = !attrs_copy->dont_merge_requests_,
+            .rotational             = false,
+            .merge_requests         = true,
 
             .enable_partition_scanning =
                 !attrs_copy->disable_partition_scanning,
