@@ -18,6 +18,7 @@
 #include <linux/init.h>
 #include <linux/ioctl.h>
 #include <linux/kernel.h>
+#include <linux/kernfs.h>
 #include <linux/kthread.h>
 #include <linux/sched.h>
 #include <linux/sizes.h>
@@ -428,6 +429,21 @@ static void kbdus_device_config_request_queue_limits_(
     }
 }
 
+static void kbdus_set_scheduler_none_(struct request_queue *q)
+{
+    // This ends up invoking elv_iosched_store(), which is not exported for
+    // modules to use. Ugly, but works.
+
+    struct kernfs_node *kn_attr;
+    int ret;
+
+    kn_attr = kernfs_find_and_get(q->kobj.sd, "scheduler");
+    WARN_ON(!kn_attr);
+
+    ret = q->kobj.ktype->sysfs_ops->store(&q->kobj, kn_attr->priv, "none", 4);
+    WARN_ON(ret != 4);
+}
+
 static int kbdus_device_add_disk_(void *argument)
 {
     struct kbdus_device *device;
@@ -443,6 +459,10 @@ static int kbdus_device_add_disk_(void *argument)
     // add disk
 
     add_disk(device->disk);
+
+    // switch scheduler to "none"
+
+    kbdus_set_scheduler_none_(device->queue);
 
     // submit "device available" notification
 

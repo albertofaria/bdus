@@ -49,10 +49,6 @@ Interface and implementation improvements
 - **Possibly support deep copying of ioctl arguments,** similar to what FUSE supports.
   Maybe also support commands that don't follow the correct ``_IO``/``_IOW``/``_IOR``/``_IOWR`` encoding.
 
-- **Find some way to reliably set the scheduler to "none" by default.**
-  This is usually desirable, as the ordering of requests has no impact on the performance of communication between *kbdus* and user space.
-  Users should nevertheless be able to explicitly set the scheduler after device creation through sysfs.
-
 Performance and resource utilization improvements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
