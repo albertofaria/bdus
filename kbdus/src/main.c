@@ -56,10 +56,6 @@ static int __init kbdus_init_(void)
     if ((ret = kbdus_control_init()) != 0)
         goto error_device_exit;
 
-    // print success message
-
-    kbdus_log_if_debug("Loaded.");
-
     return 0;
 
     // failure
@@ -82,10 +78,6 @@ static void __exit kbdus_exit_(void)
     kbdus_device_exit();
     kbdus_transceiver_exit();
     kbdus_inverter_exit();
-
-    // print success message
-
-    kbdus_log_if_debug("Unloaded.");
 }
 
 module_init(kbdus_init_);

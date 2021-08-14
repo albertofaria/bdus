@@ -88,22 +88,6 @@ static inline int kbdus_list_length(const struct list_head *head)
     } while (0)
 #endif
 
-#if KBDUS_DEBUG
-#define kbdus_log_if_debug(message_format, ...)                                \
-    do                                                                         \
-    {                                                                          \
-        printk(                                                                \
-            KERN_DEBUG "kbdus: " __FILE__                                      \
-                       ":" __stringify(__LINE__) ": " message_format "\n",     \
-            ##__VA_ARGS__);                                                    \
-    } while (0)
-#else
-#define kbdus_log_if_debug(message_format, ...)                                \
-    do                                                                         \
-    {                                                                          \
-    } while (0)
-#endif
-
 /* -------------------------------------------------------------------------- */
 
 #endif /* KBDUS_HEADER_UTILITIES_H_ */
