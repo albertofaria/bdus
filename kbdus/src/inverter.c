@@ -206,7 +206,7 @@ static enum kbdus_item_type
 #endif
 
     default:
-        kbdus_assert(false);
+        WARN_ON(true);
         return -1;
     }
 
@@ -264,37 +264,35 @@ static bool kbdus_inverter_req_is_supported_(
         // but the following should only appear if they are explicitly enabled
 
     case KBDUS_ITEM_TYPE_WRITE_SAME:
-        kbdus_assert(
-            inverter->flags & KBDUS_INVERTER_FLAG_SUPPORTS_WRITE_SAME_);
+        WARN_ON(!(inverter->flags & KBDUS_INVERTER_FLAG_SUPPORTS_WRITE_SAME_));
         return inverter->flags & KBDUS_INVERTER_FLAG_SUPPORTS_WRITE_SAME_;
 
     case KBDUS_ITEM_TYPE_WRITE_ZEROS_NO_UNMAP:
     case KBDUS_ITEM_TYPE_WRITE_ZEROS_MAY_UNMAP:
-        kbdus_assert(
-            inverter->flags & KBDUS_INVERTER_FLAG_SUPPORTS_WRITE_ZEROS_);
+        WARN_ON(!(inverter->flags & KBDUS_INVERTER_FLAG_SUPPORTS_WRITE_ZEROS_));
         return inverter->flags & KBDUS_INVERTER_FLAG_SUPPORTS_WRITE_ZEROS_;
 
     case KBDUS_ITEM_TYPE_FUA_WRITE:
-        kbdus_assert(inverter->flags & KBDUS_INVERTER_FLAG_SUPPORTS_FUA_WRITE_);
+        WARN_ON(!(inverter->flags & KBDUS_INVERTER_FLAG_SUPPORTS_FUA_WRITE_));
         return inverter->flags & KBDUS_INVERTER_FLAG_SUPPORTS_FUA_WRITE_;
 
     case KBDUS_ITEM_TYPE_FLUSH:
-        kbdus_assert(inverter->flags & KBDUS_INVERTER_FLAG_SUPPORTS_FLUSH_);
+        WARN_ON(!(inverter->flags & KBDUS_INVERTER_FLAG_SUPPORTS_FLUSH_));
         return inverter->flags & KBDUS_INVERTER_FLAG_SUPPORTS_FLUSH_;
 
     case KBDUS_ITEM_TYPE_DISCARD:
-        kbdus_assert(inverter->flags & KBDUS_INVERTER_FLAG_SUPPORTS_DISCARD_);
+        WARN_ON(!(inverter->flags & KBDUS_INVERTER_FLAG_SUPPORTS_DISCARD_));
         return inverter->flags & KBDUS_INVERTER_FLAG_SUPPORTS_DISCARD_;
 
     case KBDUS_ITEM_TYPE_SECURE_ERASE:
-        kbdus_assert(
-            inverter->flags & KBDUS_INVERTER_FLAG_SUPPORTS_SECURE_ERASE_);
+        WARN_ON(
+            !(inverter->flags & KBDUS_INVERTER_FLAG_SUPPORTS_SECURE_ERASE_));
         return inverter->flags & KBDUS_INVERTER_FLAG_SUPPORTS_SECURE_ERASE_;
 
         // and there aren't any more request types
 
     default:
-        kbdus_assert(false);
+        WARN_ON(true);
         return false;
 
 #else
@@ -325,10 +323,12 @@ static void kbdus_inverter_wrapper_to_awaiting_get_(
     struct kbdus_inverter *inverter,
     struct kbdus_inverter_req_wrapper_ *wrapper)
 {
-    kbdus_assert_if_debug(
-        wrapper->state == KBDUS_REQ_STATE_FREE_
-        || wrapper->state == KBDUS_REQ_STATE_AWAITING_COMPLETION_
-        || wrapper->state == KBDUS_REQ_STATE_BEING_GOTTEN_);
+#if KBDUS_DEBUG
+    WARN_ON(
+        wrapper->state != KBDUS_REQ_STATE_FREE_
+        && wrapper->state != KBDUS_REQ_STATE_AWAITING_COMPLETION_
+        && wrapper->state != KBDUS_REQ_STATE_BEING_GOTTEN_);
+#endif
 
     // put wrapper into "awaiting get" list
 
@@ -351,7 +351,9 @@ static void kbdus_inverter_wrapper_to_being_gotten_(
     struct kbdus_inverter *inverter,
     struct kbdus_inverter_req_wrapper_ *wrapper)
 {
-    kbdus_assert_if_debug(wrapper->state == KBDUS_REQ_STATE_AWAITING_GET_);
+#if KBDUS_DEBUG
+    WARN_ON(wrapper->state != KBDUS_REQ_STATE_AWAITING_GET_);
+#endif
 
     list_del(&wrapper->list);
 
@@ -363,9 +365,11 @@ static void kbdus_inverter_wrapper_to_awaiting_completion_(
     struct kbdus_inverter *inverter,
     struct kbdus_inverter_req_wrapper_ *wrapper)
 {
-    kbdus_assert_if_debug(
-        wrapper->state == KBDUS_REQ_STATE_BEING_GOTTEN_
-        || wrapper->state == KBDUS_REQ_STATE_BEING_COMPLETED_);
+#if KBDUS_DEBUG
+    WARN_ON(
+        wrapper->state != KBDUS_REQ_STATE_BEING_GOTTEN_
+        && wrapper->state != KBDUS_REQ_STATE_BEING_COMPLETED_);
+#endif
 
     wrapper->state = KBDUS_REQ_STATE_AWAITING_COMPLETION_;
 }
@@ -375,8 +379,9 @@ static void kbdus_inverter_wrapper_to_being_completed_(
     struct kbdus_inverter *inverter,
     struct kbdus_inverter_req_wrapper_ *wrapper)
 {
-    kbdus_assert_if_debug(
-        wrapper->state == KBDUS_REQ_STATE_AWAITING_COMPLETION_);
+#if KBDUS_DEBUG
+    WARN_ON(wrapper->state != KBDUS_REQ_STATE_AWAITING_COMPLETION_);
+#endif
 
     wrapper->state = KBDUS_REQ_STATE_BEING_COMPLETED_;
 }
@@ -389,11 +394,13 @@ static void kbdus_inverter_wrapper_to_free_(
 {
     struct kbdus_inverter_pdu *pdu;
 
-    kbdus_assert_if_debug(
-        wrapper->state == KBDUS_REQ_STATE_AWAITING_GET_
-        || wrapper->state == KBDUS_REQ_STATE_BEING_GOTTEN_
-        || wrapper->state == KBDUS_REQ_STATE_AWAITING_COMPLETION_
-        || wrapper->state == KBDUS_REQ_STATE_BEING_COMPLETED_);
+#if KBDUS_DEBUG
+    WARN_ON(
+        wrapper->state != KBDUS_REQ_STATE_AWAITING_GET_
+        && wrapper->state != KBDUS_REQ_STATE_BEING_GOTTEN_
+        && wrapper->state != KBDUS_REQ_STATE_AWAITING_COMPLETION_
+        && wrapper->state != KBDUS_REQ_STATE_BEING_COMPLETED_);
+#endif
 
     // complete request
 
@@ -539,15 +546,15 @@ void kbdus_inverter_destroy(struct kbdus_inverter *inverter)
 
     // perform some sanity checks
 
-    kbdus_assert(inverter->flags & KBDUS_INVERTER_FLAG_TERMINATED_);
+    WARN_ON(!(inverter->flags & KBDUS_INVERTER_FLAG_TERMINATED_));
 
-    kbdus_assert(kbdus_list_length(&inverter->reqs_free) == inverter->num_reqs);
-    kbdus_assert(list_empty(&inverter->reqs_awaiting_get));
+    WARN_ON(kbdus_list_length(&inverter->reqs_free) != inverter->num_reqs);
+    WARN_ON(!list_empty(&inverter->reqs_awaiting_get));
 
     for (i = 0; i < inverter->num_reqs; ++i)
-        kbdus_assert(inverter->reqs_all[i].state == KBDUS_REQ_STATE_FREE_);
+        WARN_ON(inverter->reqs_all[i].state != KBDUS_REQ_STATE_FREE_);
 
-    kbdus_assert(!spin_is_locked(&inverter->reqs_lock));
+    WARN_ON(spin_is_locked(&inverter->reqs_lock));
 
     // free inverter structure
 
@@ -591,7 +598,7 @@ void kbdus_inverter_deactivate(struct kbdus_inverter *inverter, bool flush)
 {
     spin_lock_irq(&inverter->reqs_lock);
 
-    kbdus_assert(!(inverter->flags & KBDUS_INVERTER_FLAG_TERMINATED_));
+    WARN_ON(inverter->flags & KBDUS_INVERTER_FLAG_TERMINATED_);
 
     if (!(inverter->flags & KBDUS_INVERTER_FLAG_DEACTIVATED_))
     {
@@ -614,7 +621,7 @@ void kbdus_inverter_activate(struct kbdus_inverter *inverter)
 
     spin_lock_irq(&inverter->reqs_lock);
 
-    kbdus_assert(!(inverter->flags & KBDUS_INVERTER_FLAG_TERMINATED_));
+    WARN_ON(inverter->flags & KBDUS_INVERTER_FLAG_TERMINATED_);
 
     // test and clear "deactivated" flag
 
@@ -634,10 +641,10 @@ void kbdus_inverter_activate(struct kbdus_inverter *inverter)
         {
             wrapper = &inverter->reqs_all[i];
 
-            kbdus_assert(
-                wrapper->state == KBDUS_REQ_STATE_FREE_
-                || wrapper->state == KBDUS_REQ_STATE_AWAITING_GET_
-                || wrapper->state == KBDUS_REQ_STATE_AWAITING_COMPLETION_);
+            WARN_ON(
+                wrapper->state != KBDUS_REQ_STATE_FREE_
+                && wrapper->state != KBDUS_REQ_STATE_AWAITING_GET_
+                && wrapper->state != KBDUS_REQ_STATE_AWAITING_COMPLETION_);
 
             switch (wrapper->state)
             {
@@ -693,7 +700,9 @@ int kbdus_inverter_submit_request(
 
     // perform some sanity checks
 
-    kbdus_assert_if_debug(!list_empty(&inverter->reqs_free));
+#if KBDUS_DEBUG
+    WARN_ON(list_empty(&inverter->reqs_free));
+#endif
 
     // fail request if inverter was terminated
 
@@ -778,19 +787,19 @@ enum blk_eh_timer_return kbdus_inverter_timeout_request(
 
     // perform some sanity checks
 
-    kbdus_assert(wrapper);
+    WARN_ON(!wrapper);
 
-    kbdus_assert(
-        wrapper->item.type == KBDUS_ITEM_TYPE_READ
-        || wrapper->item.type == KBDUS_ITEM_TYPE_WRITE
-        || wrapper->item.type == KBDUS_ITEM_TYPE_WRITE_SAME
-        || wrapper->item.type == KBDUS_ITEM_TYPE_WRITE_ZEROS_NO_UNMAP
-        || wrapper->item.type == KBDUS_ITEM_TYPE_WRITE_ZEROS_MAY_UNMAP
-        || wrapper->item.type == KBDUS_ITEM_TYPE_FUA_WRITE
-        || wrapper->item.type == KBDUS_ITEM_TYPE_FLUSH
-        || wrapper->item.type == KBDUS_ITEM_TYPE_DISCARD
-        || wrapper->item.type == KBDUS_ITEM_TYPE_SECURE_ERASE
-        || wrapper->item.type == KBDUS_ITEM_TYPE_IOCTL);
+    WARN_ON(
+        wrapper->item.type != KBDUS_ITEM_TYPE_READ
+        && wrapper->item.type != KBDUS_ITEM_TYPE_WRITE
+        && wrapper->item.type != KBDUS_ITEM_TYPE_WRITE_SAME
+        && wrapper->item.type != KBDUS_ITEM_TYPE_WRITE_ZEROS_NO_UNMAP
+        && wrapper->item.type != KBDUS_ITEM_TYPE_WRITE_ZEROS_MAY_UNMAP
+        && wrapper->item.type != KBDUS_ITEM_TYPE_FUA_WRITE
+        && wrapper->item.type != KBDUS_ITEM_TYPE_FLUSH
+        && wrapper->item.type != KBDUS_ITEM_TYPE_DISCARD
+        && wrapper->item.type != KBDUS_ITEM_TYPE_SECURE_ERASE
+        && wrapper->item.type != KBDUS_ITEM_TYPE_IOCTL);
 
     if (wrapper->item.handle_seqnum != pdu->handle_seqnum)
     {
@@ -821,7 +830,7 @@ enum blk_eh_timer_return kbdus_inverter_timeout_request(
 
         default:
 
-            kbdus_assert(false);
+            WARN_ON(true);
 
             ret = KBDUS_INVERTER_BLK_EH_DONE_;
 
@@ -939,7 +948,9 @@ void kbdus_inverter_commit_item_get(
 
         // perform some sanity checks
 
-        kbdus_assert_if_debug(wrapper->state == KBDUS_REQ_STATE_BEING_GOTTEN_);
+#if KBDUS_DEBUG
+        WARN_ON(wrapper->state != KBDUS_REQ_STATE_BEING_GOTTEN_);
+#endif
 
         // advance request state
 
@@ -996,7 +1007,9 @@ void kbdus_inverter_abort_item_get(
 
         // perform some sanity checks
 
-        kbdus_assert_if_debug(wrapper->state == KBDUS_REQ_STATE_BEING_GOTTEN_);
+#if KBDUS_DEBUG
+        WARN_ON(wrapper->state != KBDUS_REQ_STATE_BEING_GOTTEN_);
+#endif
 
         // advance request state
 
@@ -1082,12 +1095,13 @@ void kbdus_inverter_commit_item_completion(
 
     // perform some sanity checks
 
-    kbdus_assert_if_debug(wrapper->state == KBDUS_REQ_STATE_BEING_COMPLETED_);
-
-    kbdus_assert_if_debug(
-        wrapper->item.type != KBDUS_ITEM_TYPE_DEVICE_AVAILABLE
-        && wrapper->item.type != KBDUS_ITEM_TYPE_TERMINATE
-        && wrapper->item.type != KBDUS_ITEM_TYPE_FLUSH_AND_TERMINATE);
+#if KBDUS_DEBUG
+    WARN_ON(wrapper->state != KBDUS_REQ_STATE_BEING_COMPLETED_);
+    WARN_ON(
+        wrapper->item.type == KBDUS_ITEM_TYPE_DEVICE_AVAILABLE
+        || wrapper->item.type == KBDUS_ITEM_TYPE_TERMINATE
+        || wrapper->item.type == KBDUS_ITEM_TYPE_FLUSH_AND_TERMINATE);
+#endif
 
     // advance item state
 
@@ -1137,12 +1151,13 @@ void kbdus_inverter_abort_item_completion(
 
     // perform some sanity checks
 
-    kbdus_assert_if_debug(wrapper->state == KBDUS_REQ_STATE_BEING_COMPLETED_);
-
-    kbdus_assert_if_debug(
-        wrapper->item.type != KBDUS_ITEM_TYPE_DEVICE_AVAILABLE
-        && wrapper->item.type != KBDUS_ITEM_TYPE_TERMINATE
-        && wrapper->item.type != KBDUS_ITEM_TYPE_FLUSH_AND_TERMINATE);
+#if KBDUS_DEBUG
+    WARN_ON(wrapper->state != KBDUS_REQ_STATE_BEING_COMPLETED_);
+    WARN_ON(
+        wrapper->item.type == KBDUS_ITEM_TYPE_DEVICE_AVAILABLE
+        || wrapper->item.type == KBDUS_ITEM_TYPE_TERMINATE
+        || wrapper->item.type == KBDUS_ITEM_TYPE_FLUSH_AND_TERMINATE);
+#endif
 
     // advance request state
 

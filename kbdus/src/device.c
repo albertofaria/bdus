@@ -778,7 +778,7 @@ struct kbdus_device *
     ret_error = snprintf(
         device->disk->disk_name, DISK_NAME_LEN, "bdus-%llu", config->id);
 
-    kbdus_assert(ret_error < DISK_NAME_LEN);
+    WARN_ON(ret_error >= DISK_NAME_LEN);
 
     set_capacity(device->disk, (sector_t)(config->size / 512ull));
     set_disk_ro(device->disk, (int)kbdus_device_is_read_only_(config));
@@ -893,7 +893,7 @@ void kbdus_device_deactivate(struct kbdus_device *device, bool flush)
 
     old_state = atomic_xchg(&device->state, KBDUS_DEVICE_STATE_INACTIVE);
 
-    kbdus_assert(old_state == KBDUS_DEVICE_STATE_ACTIVE);
+    WARN_ON(old_state != KBDUS_DEVICE_STATE_ACTIVE);
 
     kbdus_inverter_deactivate(device->inverter, flush);
 }
@@ -904,7 +904,7 @@ void kbdus_device_activate(struct kbdus_device *device)
 
     old_state = atomic_xchg(&device->state, KBDUS_DEVICE_STATE_ACTIVE);
 
-    kbdus_assert(old_state == KBDUS_DEVICE_STATE_INACTIVE);
+    WARN_ON(old_state != KBDUS_DEVICE_STATE_INACTIVE);
 
     kbdus_inverter_activate(device->inverter);
     kbdus_inverter_submit_device_available_notification(device->inverter);

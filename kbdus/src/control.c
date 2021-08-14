@@ -239,8 +239,8 @@ static int kbdus_control_flush_bdev_(struct block_device *bdev)
 
     // flush block_device (similar to what is done in blkdev_fsync())
 
-    kbdus_assert(bdev->bd_inode);
-    kbdus_assert(bdev->bd_inode->i_mapping);
+    WARN_ON(!bdev->bd_inode);
+    WARN_ON(!bdev->bd_inode->i_mapping);
 
     ret = filemap_write_and_wait(bdev->bd_inode->i_mapping);
 
@@ -316,7 +316,7 @@ static int kbdus_control_release_(struct inode *inode, struct file *filp)
         {
         case KBDUS_DEVICE_STATE_UNAVAILABLE:
 
-            kbdus_assert(!fd->device_wrapper->on_detach);
+            WARN_ON(fd->device_wrapper->on_detach);
 
             kbdus_control_destroy_device_(fd->device_wrapper);
 
@@ -366,7 +366,7 @@ static int kbdus_control_release_(struct inode *inode, struct file *filp)
             break;
 
         default:
-            kbdus_assert(false);
+            WARN_ON(true);
             break;
         }
 
@@ -423,7 +423,7 @@ static int __kbdus_control_ioctl_create_device_(
         &kbdus_control_devices_, NULL, 0, (1 << MINORBITS) / DISK_MAX_PARTS,
         GFP_KERNEL);
 
-    kbdus_assert(index != -ENOSPC);
+    WARN_ON(index == -ENOSPC);
 
     if (index < 0)
         return index;
@@ -489,7 +489,7 @@ static int __kbdus_control_ioctl_create_device_(
 
     spin_unlock(&kbdus_control_device_destroyed_.lock);
 
-    kbdus_assert(!prev_ptr);
+    WARN_ON(prev_ptr);
 
     fd->device_wrapper = device_wrapper;
     fd->transceiver    = transceiver;
@@ -605,7 +605,7 @@ static int __kbdus_control_ioctl_attach_to_device_(
 
             device_wrapper->on_detach = NULL;
 
-            kbdus_assert(!device_wrapper->fd);
+            WARN_ON(device_wrapper->fd);
         }
         else
         {
@@ -630,9 +630,9 @@ static int __kbdus_control_ioctl_attach_to_device_(
         }
     }
 
-    kbdus_assert(
+    WARN_ON(
         kbdus_device_get_state(device_wrapper->device)
-        == KBDUS_DEVICE_STATE_INACTIVE);
+        != KBDUS_DEVICE_STATE_INACTIVE);
 
     // create transceiver
 
@@ -771,7 +771,7 @@ static int kbdus_control_ioctl_terminate_(struct kbdus_control_fd_ *fd)
         break;
 
     default:
-        kbdus_assert(false);
+        WARN_ON(true);
         break;
     }
 
@@ -1308,7 +1308,7 @@ void kbdus_control_exit(void)
 
     idr_for_each_entry(&kbdus_control_devices_, device_wrapper, index)
     {
-        kbdus_assert(!device_wrapper->fd);
+        WARN_ON(device_wrapper->fd);
 
         kbdus_device_destroy(device_wrapper->device);
         kfree(device_wrapper);
@@ -1318,9 +1318,9 @@ void kbdus_control_exit(void)
 
     // perform some sanity checks
 
-    kbdus_assert(!mutex_is_locked(&kbdus_control_mutex_));
-    kbdus_assert(!spin_is_locked(&kbdus_control_device_destroyed_.lock));
-    kbdus_assert(!waitqueue_active(&kbdus_control_device_destroyed_));
+    WARN_ON(mutex_is_locked(&kbdus_control_mutex_));
+    WARN_ON(spin_is_locked(&kbdus_control_device_destroyed_.lock));
+    WARN_ON(waitqueue_active(&kbdus_control_device_destroyed_));
 
     // undo all initialization
 

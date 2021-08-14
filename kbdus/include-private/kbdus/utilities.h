@@ -66,28 +66,4 @@ static inline int kbdus_list_length(const struct list_head *head)
 
 /* -------------------------------------------------------------------------- */
 
-#define kbdus_assert(condition)                                                \
-    do                                                                         \
-    {                                                                          \
-        if (unlikely(!(condition)))                                            \
-        {                                                                      \
-            printk( \
-                KERN_ALERT "kbdus: " __FILE__ ":" __stringify(__LINE__) \
-                ": assertion failed, system may be in an inconsistent state: " \
-                __stringify(condition) "\n" \
-                );                                                          \
-        }                                                                      \
-    } while (0)
-
-#if KBDUS_DEBUG
-#define kbdus_assert_if_debug(condition) kbdus_assert(condition)
-#else
-#define kbdus_assert_if_debug(condition)                                       \
-    do                                                                         \
-    {                                                                          \
-    } while (0)
-#endif
-
-/* -------------------------------------------------------------------------- */
-
 #endif /* KBDUS_HEADER_UTILITIES_H_ */
