@@ -416,6 +416,12 @@ static void kbdus_device_config_request_queue_limits_(
 
 static void kbdus_set_scheduler_none_(struct request_queue *q)
 {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0)
+
+    // Scheduler is already "none" due to the BLK_MQ_F_NO_SCHED_BY_DEFAULT flag.
+
+#else
+
     // This ends up invoking elv_iosched_store(), which is not exported for
     // modules to use. Ugly, but works.
 
@@ -427,6 +433,8 @@ static void kbdus_set_scheduler_none_(struct request_queue *q)
 
     ret = q->kobj.ktype->sysfs_ops->store(&q->kobj, kn_attr->priv, "none", 4);
     WARN_ON(ret != 4);
+
+#endif
 }
 
 static int kbdus_device_add_disk_(void *argument)
@@ -723,6 +731,7 @@ struct kbdus_device *
 {
     struct kbdus_device *device;
     int ret_error;
+    unsigned int flags;
 
     // allocate and initialize device structure a bit
 
@@ -750,10 +759,18 @@ struct kbdus_device *
 
     // initialize request queue
 
+    flags = 0;
+
+    if (config->merge_requests)
+        flags |= BLK_MQ_F_SHOULD_MERGE;
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0)
+    flags |= BLK_MQ_F_NO_SCHED_BY_DEFAULT;
+#endif
+
     device->queue = kbdus_device_create_queue_(
         &device->tag_set, &kbdus_device_queue_ops_,
-        (unsigned int)config->max_outstanding_reqs,
-        config->merge_requests ? BLK_MQ_F_SHOULD_MERGE : 0,
+        (unsigned int)config->max_outstanding_reqs, flags,
         (unsigned int)sizeof(struct kbdus_inverter_pdu));
 
     if (IS_ERR(device->queue))
