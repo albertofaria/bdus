@@ -479,9 +479,7 @@ int kbdus_transceiver_validate_and_adjust_config(
 {
     // ensure that reserved space is zeroed out
 
-    static const char zero[sizeof(config->fd.reserved_)];
-
-    if (memcmp(config->fd.reserved_, zero, sizeof(zero)) != 0)
+    if (!kbdus_array_is_zero_filled(config->fd.reserved_))
         return -EINVAL;
 
     // adjust configuration

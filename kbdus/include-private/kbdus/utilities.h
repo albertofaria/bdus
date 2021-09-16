@@ -33,6 +33,13 @@
 
 /* -------------------------------------------------------------------------- */
 
+#define kbdus_array_is_zero_filled(x)                                          \
+    ({                                                                         \
+        static const char zero[sizeof((x))];                                   \
+        __must_be_array((x));                                                  \
+        memcmp((x), zero, sizeof(zero)) == 0;                                  \
+    })
+
 // This wraps access_ok(), which lost the 'type' argument in Linux 5.0
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0)

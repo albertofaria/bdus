@@ -115,11 +115,8 @@ static bool
 
     // ensure that reserved space is zeroed out
 
-    static const char zero_1[sizeof(config->reserved_1_)];
-    static const char zero_2[sizeof(config->reserved_2_)];
-
-    valid = (memcmp(config->reserved_1_, zero_1, sizeof(zero_1)) == 0)
-        && (memcmp(config->reserved_2_, zero_2, sizeof(zero_2)) == 0);
+    valid = kbdus_array_is_zero_filled(config->reserved_1_)
+        && kbdus_array_is_zero_filled(config->reserved_2_);
 
     // operations -- supports_fua_write implies supports_flush
 
