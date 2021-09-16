@@ -441,7 +441,15 @@ static int kbdus_device_add_disk_(void *argument)
 
     // add disk
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0)
+    if (add_disk(device->disk) != 0)
+    {
+        kbdus_device_terminate(device);
+        return 0; // return value is ignored
+    }
+#else
     add_disk(device->disk);
+#endif
 
     // switch scheduler to "none"
 
@@ -451,15 +459,13 @@ static int kbdus_device_add_disk_(void *argument)
 
     kbdus_inverter_submit_device_available_notification(device->inverter);
 
-    // update device state
+    // update device state (unless already terminated)
 
     atomic_cmpxchg(
         &device->state, KBDUS_DEVICE_STATE_UNAVAILABLE,
         KBDUS_DEVICE_STATE_ACTIVE);
 
-    // success
-
-    return 0;
+    return 0; // return value is ignored
 }
 
 /* -------------------------------------------------------------------------- */
