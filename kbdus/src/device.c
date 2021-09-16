@@ -56,6 +56,7 @@ struct kbdus_device
 
     struct gendisk *disk;
     struct task_struct *add_disk_task;
+    struct completion add_disk_task_started;
 };
 
 /* -------------------------------------------------------------------------- */
@@ -431,14 +432,12 @@ static void kbdus_set_scheduler_none_(struct request_queue *q)
 static int kbdus_device_add_disk_(void *argument)
 {
     struct kbdus_device *device;
-    struct completion *add_disk_task_started;
 
-    device                = ((void **)argument)[0];
-    add_disk_task_started = ((void **)argument)[1];
+    device = argument;
 
     // inform waiters that task started
 
-    complete(add_disk_task_started);
+    complete(&device->add_disk_task_started);
 
     // add disk
 
@@ -718,8 +717,6 @@ struct kbdus_device *
 {
     struct kbdus_device *device;
     int ret_error;
-    struct completion add_disk_task_started;
-    void *add_disk_task_argument[2];
 
     // allocate and initialize device structure a bit
 
@@ -766,20 +763,16 @@ struct kbdus_device *
 
     // initialize task for adding the disk
 
-    init_completion(&add_disk_task_started);
-
-    add_disk_task_argument[0] = device;
-    add_disk_task_argument[1] = &add_disk_task_started;
-
     device->add_disk_task = kthread_create(
-        kbdus_device_add_disk_, add_disk_task_argument,
-        "kbdus_device_add_disk_");
+        kbdus_device_add_disk_, device, "kbdus_device_add_disk_");
 
     if (IS_ERR(device->add_disk_task))
     {
         ret_error = PTR_ERR(device->add_disk_task);
         goto error_cleanup_queue;
     }
+
+    init_completion(&device->add_disk_task_started);
 
     // initialize gendisk
 
@@ -823,7 +816,7 @@ struct kbdus_device *
     // del_gendisk() in device destruction would mess up, as kthread_stop() will
     // make the thread not run at all if it still hadn't started running)
 
-    wait_for_completion(&add_disk_task_started);
+    wait_for_completion(&device->add_disk_task_started);
 
     // success
 
