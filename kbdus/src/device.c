@@ -47,12 +47,7 @@ struct kbdus_device
 
     struct kbdus_inverter *inverter;
 
-    // request queue
-
-    struct request_queue *queue;
     struct blk_mq_tag_set tag_set;
-
-    // disk
 
     struct gendisk *disk;
     struct task_struct *add_disk_task;
@@ -282,55 +277,6 @@ static void kbdus_device_queue_flag_(
 #endif
 }
 
-static struct request_queue *kbdus_device_create_queue_(
-    struct blk_mq_tag_set *tag_set, const struct blk_mq_ops *ops,
-    unsigned int queue_depth, unsigned int tag_set_flags, unsigned int cmd_size)
-{
-    // this function is similar to blk_mq_init_sq_queue(), which exists only
-    // since Linux 4.19.0
-
-    int ret;
-    struct request_queue *queue;
-
-    // initialize tag set
-
-    memset(tag_set, 0, sizeof(*tag_set));
-
-    tag_set->nr_hw_queues = 1;
-    tag_set->queue_depth  = queue_depth;
-    tag_set->numa_node    = NUMA_NO_NODE;
-    tag_set->cmd_size     = cmd_size;
-    tag_set->flags        = tag_set_flags;
-
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
-    tag_set->ops = ops;
-#else
-    tag_set->ops = (struct blk_mq_ops *)ops;
-#endif
-
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0)
-    tag_set->nr_maps = 1;
-#endif
-
-    // allocate tag set
-
-    ret = blk_mq_alloc_tag_set(tag_set);
-
-    if (ret != 0)
-        return ERR_PTR(ret);
-
-    // create queue
-
-    queue = blk_mq_init_queue(tag_set);
-
-    if (IS_ERR(queue))
-        blk_mq_free_tag_set(tag_set);
-
-    // return queue (or error)
-
-    return queue;
-}
-
 static void kbdus_device_config_request_queue_flags_(
     struct request_queue *queue, const struct kbdus_device_config *config)
 {
@@ -461,7 +407,7 @@ static int kbdus_device_add_disk_(void *argument)
 
     // switch scheduler to "none"
 
-    kbdus_set_scheduler_none_(device->queue);
+    kbdus_set_scheduler_none_(device->disk->queue);
 
     // submit "device available" notification
 
@@ -690,6 +636,122 @@ static const struct block_device_operations kbdus_device_ops_ = {
 
 /* -------------------------------------------------------------------------- */
 
+static struct gendisk *kbdus_device_create_disk_(
+    struct blk_mq_tag_set *tag_set, const struct kbdus_device_config *config)
+{
+    unsigned int tag_set_flags;
+    int ret;
+    int minors;
+    struct gendisk *disk;
+
+    // initialize tag set
+
+    tag_set_flags = 0;
+
+    if (config->merge_requests)
+        tag_set_flags |= BLK_MQ_F_SHOULD_MERGE;
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0)
+    tag_set_flags |= BLK_MQ_F_NO_SCHED_BY_DEFAULT;
+#endif
+
+    memset(tag_set, 0, sizeof(*tag_set));
+
+    tag_set->nr_hw_queues = 1;
+    tag_set->queue_depth  = (unsigned int)config->max_outstanding_reqs;
+    tag_set->numa_node    = NUMA_NO_NODE;
+    tag_set->cmd_size     = (unsigned int)sizeof(struct kbdus_inverter_pdu);
+    tag_set->flags        = tag_set_flags;
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
+    tag_set->ops = &kbdus_device_queue_ops_;
+#else
+    tag_set->ops = (struct blk_mq_ops *)&kbdus_device_queue_ops_;
+#endif
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0)
+    tag_set->nr_maps = 1;
+#endif
+
+    // allocate tag set
+
+    ret = blk_mq_alloc_tag_set(tag_set);
+
+    if (ret != 0)
+        return ERR_PTR(ret);
+
+    // create disk
+
+    minors = config->enable_partition_scanning ? DISK_MAX_PARTS : 1;
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0)
+
+    disk = blk_mq_alloc_disk(tag_set, NULL);
+
+    if (IS_ERR(disk))
+    {
+        blk_mq_free_tag_set(tag_set);
+        return disk;
+    }
+
+    disk->minors = minors;
+
+#else
+
+    disk = alloc_disk(minors);
+
+    if (!disk)
+    {
+        blk_mq_free_tag_set(tag_set);
+        return ERR_PTR(-EIO);
+    }
+
+#endif
+
+    if (!config->enable_partition_scanning)
+        disk->flags |= GENHD_FL_NO_PART_SCAN;
+
+    disk->major       = kbdus_device_major_;
+    disk->first_minor = (int)config->minor;
+    disk->fops        = &kbdus_device_ops_;
+
+    WARN_ON(
+        snprintf(disk->disk_name, DISK_NAME_LEN, "bdus-%llu", config->id)
+        >= DISK_NAME_LEN);
+
+    set_capacity(disk, (sector_t)(config->size / 512ull));
+    set_disk_ro(disk, (int)kbdus_device_is_read_only_(config));
+
+    // create queue
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0)
+
+    // Queue was already created by blk_mq_alloc_disk().
+
+#else
+
+    disk->queue = blk_mq_init_queue(tag_set);
+
+    if (IS_ERR(disk->queue))
+    {
+        ret = PTR_ERR(disk->queue);
+        put_disk(disk);
+        blk_mq_free_tag_set(tag_set);
+        return ERR_PTR(ret);
+    }
+
+#endif
+
+    kbdus_device_config_request_queue_flags_(disk->queue, config);
+    kbdus_device_config_request_queue_limits_(disk->queue, config);
+
+    // return disk
+
+    return disk;
+}
+
+/* -------------------------------------------------------------------------- */
+
 int __init kbdus_device_init(void)
 {
     // register block device
@@ -731,7 +793,6 @@ struct kbdus_device *
 {
     struct kbdus_device *device;
     int ret_error;
-    unsigned int flags;
 
     // allocate and initialize device structure a bit
 
@@ -757,34 +818,7 @@ struct kbdus_device *
         goto error_free_device;
     }
 
-    // initialize request queue
-
-    flags = 0;
-
-    if (config->merge_requests)
-        flags |= BLK_MQ_F_SHOULD_MERGE;
-
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0)
-    flags |= BLK_MQ_F_NO_SCHED_BY_DEFAULT;
-#endif
-
-    device->queue = kbdus_device_create_queue_(
-        &device->tag_set, &kbdus_device_queue_ops_,
-        (unsigned int)config->max_outstanding_reqs, flags,
-        (unsigned int)sizeof(struct kbdus_inverter_pdu));
-
-    if (IS_ERR(device->queue))
-    {
-        ret_error = PTR_ERR(device->queue);
-        goto error_destroy_inverter;
-    }
-
-    device->queue->queuedata = device;
-
-    kbdus_device_config_request_queue_flags_(device->queue, config);
-    kbdus_device_config_request_queue_limits_(device->queue, config);
-
-    // initialize task for adding the disk
+    // create task for adding the disk
 
     device->add_disk_task = kthread_create(
         kbdus_device_add_disk_, device, "kbdus_device_add_disk_");
@@ -792,37 +826,22 @@ struct kbdus_device *
     if (IS_ERR(device->add_disk_task))
     {
         ret_error = PTR_ERR(device->add_disk_task);
-        goto error_cleanup_queue;
+        goto error_destroy_inverter;
     }
 
     init_completion(&device->add_disk_task_started);
 
-    // initialize gendisk
+    // create disk
 
-    device->disk =
-        alloc_disk(config->enable_partition_scanning ? DISK_MAX_PARTS : 1);
+    device->disk = kbdus_device_create_disk_(&device->tag_set, config);
 
-    if (!device->disk)
+    if (IS_ERR(device->disk))
     {
-        ret_error = -EIO;
+        ret_error = PTR_ERR(device->disk);
         goto error_stop_add_disk_task;
     }
 
-    if (!config->enable_partition_scanning)
-        device->disk->flags |= GENHD_FL_NO_PART_SCAN;
-
-    device->disk->major       = kbdus_device_major_;
-    device->disk->first_minor = (int)config->minor;
-    device->disk->fops        = &kbdus_device_ops_;
-    device->disk->queue       = device->queue;
-
-    ret_error = snprintf(
-        device->disk->disk_name, DISK_NAME_LEN, "bdus-%llu", config->id);
-
-    WARN_ON(ret_error >= DISK_NAME_LEN);
-
-    set_capacity(device->disk, (sector_t)(config->size / 512ull));
-    set_disk_ro(device->disk, (int)kbdus_device_is_read_only_(config));
+    device->disk->queue->queuedata = device;
 
     // "get" `add_disk_task` so that it is still around when
     // `kbdus_device_destroy()` and thus `kthread_stop()` is called, even if the
@@ -849,9 +868,6 @@ struct kbdus_device *
 
 error_stop_add_disk_task:
     kthread_stop(device->add_disk_task);
-error_cleanup_queue:
-    blk_cleanup_queue(device->queue);
-    blk_mq_free_tag_set(&device->tag_set);
 error_destroy_inverter:
     kbdus_inverter_terminate(device->inverter);
     kbdus_inverter_destroy(device->inverter);
@@ -872,10 +888,12 @@ void kbdus_device_destroy(struct kbdus_device *device)
     kthread_stop(device->add_disk_task);
     put_task_struct(device->add_disk_task);
 
-    // delete gendisk and clean up queue (must be in this order, it appears)
+    // clean up disk and queue
 
     del_gendisk(device->disk);
-    blk_cleanup_queue(device->queue);
+
+    blk_cleanup_queue(device->disk->queue);
+    put_disk(device->disk);
 
     // destroy inverter
 
@@ -884,10 +902,6 @@ void kbdus_device_destroy(struct kbdus_device *device)
     // free tag set
 
     blk_mq_free_tag_set(&device->tag_set);
-
-    // put gendisk
-
-    put_disk(device->disk);
 
     // free device
 
