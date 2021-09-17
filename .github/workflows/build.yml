@@ -66,6 +66,7 @@ jobs:
       fail-fast: false
       matrix:
         linux:
+          - '5.15'
           - '5.14'
           - '5.13'
           - '5.12'
