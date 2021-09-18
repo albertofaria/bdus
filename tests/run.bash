@@ -7,6 +7,9 @@ set -o errexit -o pipefail -o nounset
 script_dir="$( readlink -e "$0" | xargs dirname )"
 repo_root="$( readlink -e "${script_dir}/.." )"
 
+kernel_major="$( uname -r | cut -d '.' -f1 )"
+kernel_minor="$( uname -r | cut -d '.' -f2 )"
+
 # check usage
 
 if (( $# == 0 )); then
@@ -68,13 +71,17 @@ for test in "$@"; do
             "${SHELL}" \
                 -c 'set -o errexit -o pipefail -o nounset
                     readonly repo_root="$1"
-                    source "$2/shared/util.bash"
-                    cd "$3"
+                    readonly kernel_major="$2"
+                    readonly kernel_minor="$3"
+                    source "$4/shared/util.bash"
+                    cd "$5"
                     set -o xtrace
-                    source "$4"
+                    source "$6"
                     ' \
                 "${SHELL}" \
                 "${repo_root}" \
+                "${kernel_major}" \
+                "${kernel_minor}" \
                 "${script_dir}" \
                 "${test_dirname}" \
                 "${test_basename}" ||

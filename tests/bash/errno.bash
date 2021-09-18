@@ -21,7 +21,7 @@ driver='
         struct bdus_ctx *ctx
         )
     {
-        return ENOLINK;
+        return ENOSPC;
     }
 
     static int device_write(
@@ -29,7 +29,7 @@ driver='
         struct bdus_ctx *ctx
         )
     {
-        return ENOSPC;
+        return ENOLINK;
     }
 
     static int device_discard(
@@ -75,82 +75,112 @@ check_errno='
     #define _GNU_SOURCE
     #include <errno.h>
     #include <fcntl.h>
+    #include <inttypes.h>
     #include <linux/fs.h>
     #include <stdbool.h>
     #include <stdint.h>
+    #include <stdio.h>
+    #include <stdlib.h>
+    #include <string.h>
     #include <sys/ioctl.h>
     #include <sys/stat.h>
     #include <sys/types.h>
     #include <unistd.h>
 
     #include <bdus.h>
-    #include <kbdus.h>
 
     char buffer[512] __attribute__((aligned(512)));
     uint64_t range[2] = { 0, 512 };
 
-    bool check_errno_before_destroying(int fd)
+    #define expect(expr, ret) \
+        do \
+        { \
+            const int actual_ret = (expr); \
+             \
+            if (actual_ret != (ret)) \
+            { \
+                fprintf(stderr, "ERROR: %s evaluated to %d, expected %d\n", \
+                    #expr, actual_ret, (ret)); \
+                exit(1); \
+            } \
+        } \
+        while (0)
+
+    #define expect_errno(expr, ret, err) \
+        do \
+        { \
+            expect(expr, ret); \
+              \
+            if (errno != (err)) \
+            { \
+                fprintf(stderr, "ERROR: %s resulted in errno %s, expected %s\n", \
+                    #expr, strerror(errno), strerror((err))); \
+                exit(1); \
+            } \
+        } \
+        while (0)
+
+    void expect_dev_size(int fd, uint64_t expected_size)
     {
-        bool success = true;
+        uint64_t actual_size;
 
-        success =
-            success
-            && pread(fd, buffer, sizeof(buffer), 0) == -1
-            && errno == ENOLINK;
+        if (ioctl(fd, BLKGETSIZE64, &actual_size) != 0)
+            exit(1);
 
-        success =
-            success
-            && pwrite(fd, buffer, sizeof(buffer), 0) == -1
-            && errno == ENOSPC;
-
-        success =
-            success
-            && ioctl(fd, BLKDISCARD, range) == -1
-            && errno == ETIMEDOUT;
-
-        success =
-            success
-            && fsync(fd) == -1
-            && errno == EIO;
-
-        success =
-            success
-            && ioctl(fd, _IO(42, 100)) == -1
-            && errno == EOVERFLOW;
-
-        return success;
+        if (expected_size != actual_size)
+        {
+            fprintf(stderr,
+                "ERROR: Device has size %"PRIu64", expected %"PRIu64".\n",
+                actual_size, expected_size);
+            exit(1);
+        }
     }
 
-    bool check_errno_after_destroying(int fd)
+    void check_errno_before_destroying(int fd)
     {
-        bool success = true;
+        if ('"$( kernel_is_at_least 4.10 && echo true || echo false )"')
+        {
+            expect_errno(pread(fd, buffer, sizeof(buffer), 0), -1, ENOSPC);
+            expect_errno(pwrite(fd, buffer, sizeof(buffer), 0), -1, ENOLINK);
+        }
+        else
+        {
+            expect_errno(pread(fd, buffer, sizeof(buffer), 0), -1, EIO);
+            expect_errno(pwrite(fd, buffer, sizeof(buffer), 0), -1, EIO);
+        }
 
-        success =
-            success
-            && pread(fd, buffer, sizeof(buffer), 0) == -1
-            && errno == EIO;
+        if ('"$( kernel_is_at_least 4.3 && echo true || echo false )"')
+            expect_errno(ioctl(fd, BLKDISCARD, range), -1, ETIMEDOUT);
+        else
+            expect_errno(ioctl(fd, BLKDISCARD, range), -1, EIO);
 
-        success =
-            success
-            && pwrite(fd, buffer, sizeof(buffer), 0) == -1
-            && errno == EIO;
+        expect_errno(fsync(fd), -1, EIO);
+        expect_errno(ioctl(fd, _IO(42, 100)), -1, EOVERFLOW);
+    }
 
-        success =
-            success
-            && ioctl(fd, BLKDISCARD, range) == -1
-            && errno == EIO;
+    void check_errno_after_destroying(int fd)
+    {
+        if ('"$( kernel_is_at_least 5.11 && echo true || echo false )"')
+        {
+            sleep(2);  // can take a bit for device to appear empty
 
-        success =
-            success
-            && fsync(fd) == -1
-            && errno == EIO;
+            expect_dev_size(fd, 0);
 
-        success =
-            success
-            && ioctl(fd, _IO(42, 100)) == -1
-            && errno == ENODEV;
+            expect(pread(fd, buffer, sizeof(buffer), 0), 0);
+            expect_errno(pwrite(fd, buffer, sizeof(buffer), 0), -1, ENOSPC);
+            expect_errno(ioctl(fd, BLKDISCARD, range), -1, EINVAL);
+        }
+        else
+        {
+            expect_dev_size(fd, 1 << 30);
 
-        return success;
+            expect_errno(pread(fd, buffer, sizeof(buffer), 0), -1, EIO);
+            expect_errno(pwrite(fd, buffer, sizeof(buffer), 0), -1, EIO);
+            expect_errno(ioctl(fd, BLKDISCARD, range), -1, EIO);
+        }
+
+        expect_errno(fsync(fd), -1, EIO);
+        expect_errno(ioctl(fd, _IO(42, 100)), -1, ENODEV);
     }
 
     int main(int argc, char **argv)
@@ -165,14 +195,12 @@ check_errno='
         if (fd < 0)
             return 1;
 
-        if (!check_errno_before_destroying(fd))
-            return 1;
+        check_errno_before_destroying(fd);
 
         if (!bdus_destroy_dev(dev_id))
             return 1;
 
-        if (!check_errno_after_destroying(fd))
-            return 1;
+        check_errno_after_destroying(fd);
 
         return 0;
     }

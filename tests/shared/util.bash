@@ -1,6 +1,19 @@
 # SPDX-License-Identifier: MIT
 # ---------------------------------------------------------------------------- #
 
+function kernel_is_at_least()
+{
+    { (( $# == 1 )) && [[ "$1" =~ ^[0-9]+\.[0-9]+$ ]]; } || exit 1
+
+    [[ "$1" = "$(
+        printf '%s\n%s' "${kernel_major}.${kernel_minor}" "$1" |
+            sort -V |
+            head -n1
+        )" ]]
+}
+
+# ---------------------------------------------------------------------------- #
+
 function compile_c_to()
 {
     local source
