@@ -65,19 +65,6 @@ static int kbdus_device_major_;
 
 /* -------------------------------------------------------------------------- */
 
-// Compatibility helpers to deal with kernel versions that use errno values
-// where block status codes are now used.
-
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 13, 0)
-#define kbdus_device_blk_status_t_ blk_status_t
-#define kbdus_device_errno_to_blk_status_(error) errno_to_blk_status(error)
-#else
-#define kbdus_device_blk_status_t_ int
-#define kbdus_device_errno_to_blk_status_(error) (error)
-#endif
-
-/* -------------------------------------------------------------------------- */
-
 static bool kbdus_device_is_read_only_(const struct kbdus_device_config *config)
 {
     return !config->supports_write && !config->supports_write_same
@@ -478,18 +465,35 @@ static int kbdus_device_add_disk_(void *argument)
 
 /* -------------------------------------------------------------------------- */
 
-static kbdus_device_blk_status_t_ kbdus_device_mq_ops_queue_rq_(
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 13, 0)
+
+static blk_status_t kbdus_device_mq_ops_queue_rq_(
     struct blk_mq_hw_ctx *hctx, const struct blk_mq_queue_data *bd)
 {
     struct kbdus_device *device;
-    int ret;
 
     device = hctx->queue->queuedata;
 
-    ret = kbdus_inverter_submit_request(device->inverter, bd->rq);
-
-    return kbdus_device_errno_to_blk_status_(ret);
+    return errno_to_blk_status(
+        kbdus_inverter_submit_request(device->inverter, bd->rq));
 }
+
+#else
+
+static int kbdus_device_mq_ops_queue_rq_(
+    struct blk_mq_hw_ctx *hctx, const struct blk_mq_queue_data *bd)
+{
+    struct kbdus_device *device;
+
+    device = hctx->queue->queuedata;
+
+    if (kbdus_inverter_submit_request(device->inverter, bd->rq) == 0)
+        return BLK_MQ_RQ_QUEUE_OK;
+    else
+        return BLK_MQ_RQ_QUEUE_ERROR;
+}
+
+#endif
 
 static enum blk_eh_timer_return
     kbdus_device_mq_ops_timeout_(struct request *req, bool reserved)
@@ -507,7 +511,11 @@ static void kbdus_device_mq_ops_complete_(struct request *req)
 
     pdu = blk_mq_rq_to_pdu(req);
 
-    blk_mq_end_request(req, kbdus_device_errno_to_blk_status_(pdu->error));
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 13, 0)
+    blk_mq_end_request(req, errno_to_blk_status(pdu->error));
+#else
+    blk_mq_end_request(req, pdu->error);
+#endif
 }
 
 static const struct blk_mq_ops kbdus_device_queue_ops_ = {
@@ -574,7 +582,7 @@ static int kbdus_device_ioctl_submit_and_await_(
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 18, 0)
     req = blk_get_request(disk->queue, REQ_OP_DRV_IN, 0);
 #elif LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
-    req           = blk_get_request(disk->queue, REQ_OP_DRV_IN, GFP_KERNEL);
+    req = blk_get_request(disk->queue, REQ_OP_DRV_IN, GFP_KERNEL);
 #else
     req           = blk_get_request(disk->queue, READ, GFP_KERNEL);
 #endif
