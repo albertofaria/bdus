@@ -129,6 +129,7 @@ for test in "$@"; do
         { grep -Fiv 'interrupt took' || true; } |
         { grep -Fiv 'loading out-of-tree module taints kernel' || true; } |
         { grep -Fiv 'partition table beyond EOD, truncated' || true; } |
+        { grep -Fiv 'Reset adapter' || true; } |
         { grep -Fiv 'run blktests' || true; } |
         { grep -Fiv 'unable to read RDB block 0' || true; } |
         { grep -Fiv 'xfs filesystem being mounted at' || true; } |
