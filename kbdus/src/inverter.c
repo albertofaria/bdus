@@ -212,7 +212,8 @@ static enum kbdus_item_type
 
 #else
 
-    if (req->cmd_flags & (REQ_DISCARD | REQ_SECURE))
+    if ((req->cmd_flags & (REQ_DISCARD | REQ_SECURE))
+        == (REQ_DISCARD | REQ_SECURE))
         return KBDUS_ITEM_TYPE_SECURE_ERASE;
 
     if (req->cmd_flags & REQ_DISCARD)
@@ -224,7 +225,7 @@ static enum kbdus_item_type
     if (req->cmd_flags & REQ_WRITE_SAME)
         return KBDUS_ITEM_TYPE_WRITE_SAME;
 
-    if (req->cmd_flags & (REQ_WRITE | REQ_FUA))
+    if ((req->cmd_flags & (REQ_WRITE | REQ_FUA)) == (REQ_WRITE | REQ_FUA))
         return KBDUS_ITEM_TYPE_FUA_WRITE;
 
     if (req->cmd_flags & REQ_WRITE)
