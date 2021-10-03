@@ -27,6 +27,6 @@ device_path="$( run_driver_ram )"
 
 cd "${temp_dir}/blktests-master"
 
-TEST_DEVS="${device_path}" DEVICE_ONLY=1 EXCLUDE=block/008 ./check
+TEST_DEVS="${device_path}" DEVICE_ONLY=1 EXCLUDE='block/005 block/008' ./check
 
 # ---------------------------------------------------------------------------- #
