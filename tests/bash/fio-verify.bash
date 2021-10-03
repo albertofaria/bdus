@@ -49,7 +49,7 @@ export SHELLOPTS
 (
     modes=( none read write read-write )
 
-    set +o xtrace
+    set +o xtrace  # too verbose
 
     while true; do
         mode_index=$(( RANDOM % ${#modes[@]} ))
@@ -88,16 +88,14 @@ iodepth=32
 direct=1
 EOF
 
-# wait for fio or subshell to end (fio should end first on success)
+# wait for fio or subshell to end (fio should end first on success, and the two
+# subshells always terminate in failure)
 
 wait -n
-
-(( $? == 0 )) # ensure that it was fio that ended
 
 # unmount file system
 
 umount "${mntp}"
-
 trap '{ rmdir "${mntp}"; rm -f "${loop_driver}"; }' EXIT
 
 # destroy devices
@@ -105,7 +103,7 @@ trap '{ rmdir "${mntp}"; rm -f "${loop_driver}"; }' EXIT
 bdus destroy --no-flush "${loop_device_path}"
 bdus destroy --no-flush "${ram_device_path}"
 
-# wait for subshell to terminate
+# wait for subshells to terminate
 
 wait
 
