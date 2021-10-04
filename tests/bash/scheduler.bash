@@ -11,13 +11,23 @@
 device_path="$( run_driver_ram )"
 scheduler_file="/sys/block/$( basename "${device_path}" )/queue/scheduler"
 
-# ensure that initial scheduler is "none"
+if kernel_is_at_least 4.11; then
 
-grep '\[none\]' "${scheduler_file}"
+    # ensure that initial scheduler is "none"
 
-# ensure that scheduler can be switched
+    grep '\[none\]' "${scheduler_file}"
 
-echo mq-deadline > "${scheduler_file}"
-grep '\[mq-deadline\]' "${scheduler_file}"
+    # ensure that scheduler can be switched
+
+    echo mq-deadline > "${scheduler_file}"
+    grep '\[mq-deadline\]' "${scheduler_file}"
+
+else
+
+    # ensure that initial scheduler is "none"
+
+    [[ "$( cat "${scheduler_file}" )" = none ]]
+
+fi
 
 # ---------------------------------------------------------------------------- #
