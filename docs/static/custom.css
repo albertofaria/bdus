@@ -1,4 +1,12 @@
 /* -------------------------------------------------------------------------- */
+/* omit "static" and "inline" in API reference */
+
+dl.function > dt > span.target + span.k,
+dl.function > dt > span.target + span.k + span.w + span.k {
+    display: none;
+}
+
+/* -------------------------------------------------------------------------- */
 /* separators before second-level headings */
 
 div.body h2::before {

@@ -122,6 +122,7 @@ breathe_doxygen_config_options = {
 }
 
 breathe_show_define_initializer = True
+breathe_show_enumvalue_initializer = True
 
 # ---------------------------------------------------------------------------- #
 # extension configuration -- versionwarning.extension
