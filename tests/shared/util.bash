@@ -12,6 +12,17 @@ function kernel_is_at_least()
         )" ]]
 }
 
+function kernel_is_one_of()
+{
+    local v
+
+    for v in "$@"; do
+        [[ "$v" = "${kernel_major}.${kernel_minor}" ]] && return 0
+    done
+
+    return 1
+}
+
 # ---------------------------------------------------------------------------- #
 
 function compile_c_to()

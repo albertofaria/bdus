@@ -111,7 +111,11 @@ dd if="${device_path}" iflag=direct of=/dev/zero bs=512 count=1
 { ! dd if=/dev/zero of="${device_path}" oflag=direct bs=512 count=1; } |&
     grep "Connection timed out"
 
-{ ! sync "${device_path}"; } |& grep "Connection timed out"
+if kernel_is_one_of 5.0 5.1 5.2; then
+    { ! sync "${device_path}"; } |& grep "Input/output error"
+else
+    { ! sync "${device_path}"; } |& grep "Connection timed out"
+fi
 
 run_c submit_ioctl "${device_path}"
 
