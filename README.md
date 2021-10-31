@@ -10,10 +10,10 @@
   </a>
   <!-- latest release as of current commit -->
   <a href="https://github.com/albertofaria/bdus/releases">
-    <img src="https://img.shields.io/badge/version-0.1.1-yellow.svg" />
+    <img src="https://img.shields.io/badge/version-0.1.2-yellow.svg" />
   </a>
   <!-- license -->
-  <a href="https://bdus.readthedocs.io/en/v0.1.1/user-manual/licensing.html">
+  <a href="https://bdus.readthedocs.io/en/v0.1.2/user-manual/licensing.html">
     <img src="https://img.shields.io/badge/license-MIT%20%2F%20GPLv2-blue.svg" />
   </a>
 </h1>
@@ -27,27 +27,27 @@ It was introduced by the SYSTOR '21 paper ["BDUS: Implementing Block Devices in 
 
   <dt>Documentation</dt>
   <dd>
-    All documentation is hosted at <a href="https://bdus.readthedocs.io/en/v0.1.1">Read the Docs</a>.
-    To get started, take a look at the <a href="https://bdus.readthedocs.io/en/v0.1.1/quick-start-guide.html">Quick Start Guide</a>.
-    You might also be looking for the <a href="https://bdus.readthedocs.io/en/v0.1.1/user-manual/api-reference.html">API reference</a>.
+    All documentation is hosted at <a href="https://bdus.readthedocs.io/en/v0.1.2">Read the Docs</a>.
+    To get started, take a look at the <a href="https://bdus.readthedocs.io/en/v0.1.2/quick-start-guide.html">Quick Start Guide</a>.
+    You might also be looking for the <a href="https://bdus.readthedocs.io/en/v0.1.2/user-manual/api-reference.html">API reference</a>.
   </dd>
 
   <dt>Installation</dt>
   <dd>
-    Download <a href="https://github.com/albertofaria/bdus/archive/v0.1.1.tar.gz">BDUS' latest release</a> and run <code>sudo make install</code>.
-    For more details, see <a href="https://bdus.readthedocs.io/en/v0.1.1/user-manual/installation.html">Installation</a>.
+    Download <a href="https://github.com/albertofaria/bdus/archive/v0.1.2.tar.gz">BDUS' latest release</a> and run <code>sudo make install</code>.
+    For more details, see <a href="https://bdus.readthedocs.io/en/v0.1.2/user-manual/installation.html">Installation</a>.
   </dd>
 
   <dt>Licensing</dt>
   <dd>
     BDUS is distributed under the terms of the <a href="LICENSE-MIT.txt">MIT license</a>, with the exception of its kernel module which is distributed under the terms of the <a href="LICENSE-GPLv2.txt">GPLv2 license</a>.
-    For more details, see <a href="https://bdus.readthedocs.io/en/v0.1.1/user-manual/licensing.html">Licensing</a>.
+    For more details, see <a href="https://bdus.readthedocs.io/en/v0.1.2/user-manual/licensing.html">Licensing</a>.
   </dd>
 
   <dt>Contributing</dt>
   <dd>
     To report bugs, suggest improvements, or propose new features, please use GitHub's <a href="https://github.com/albertofaria/bdus/issues">issue tracking system</a>.
-    For information on how to contribute changes, see <a href="https://bdus.readthedocs.io/en/v0.1.1/developer-manual/contributing.html">Contributing</a>.
+    For information on how to contribute changes, see <a href="https://bdus.readthedocs.io/en/v0.1.2/developer-manual/contributing.html">Contributing</a>.
   </dd>
 
   <dt>Citing</dt>

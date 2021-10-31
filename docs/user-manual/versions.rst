@@ -55,6 +55,15 @@ Version history
 
 The following is a list of all releases up to BDUS |version|, in reverse chronological order.
 
+0.1.2 (2021-10-31)
+~~~~~~~~~~~~~~~~~~
+
+The following is a list of notable changes relative to version 0.1.1.
+See also the :diff:`git diff <v0.1.1...v0.1.2>`.
+
+- Added support for Linux 5.15.
+- Devices now use no block scheduler by default.
+
 0.1.1 (2021-07-09)
 ~~~~~~~~~~~~~~~~~~
 
