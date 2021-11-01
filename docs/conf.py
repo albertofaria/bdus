@@ -52,7 +52,8 @@ rst_prolog = f"""
 """
 
 linkcheck_ignore = [
-    r"https://github\.com/albertofaria/bdus/(archive|blob|tree)/.*"
+    r"https://github\.com/albertofaria/bdus/(archive|blob|tree)/.*",
+    r"^([a-z-]+/)?[a-z-]+\.html(#[a-z-]+)?$",
 ]
 
 # ---------------------------------------------------------------------------- #
