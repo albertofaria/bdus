@@ -538,12 +538,14 @@ static int kbdus_device_ioctl_submit_and_await_(
 
     // get request
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 18, 0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 16, 0)
+    req = blk_mq_alloc_request(disk->queue, REQ_OP_DRV_IN, 0);
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(4, 18, 0)
     req = blk_get_request(disk->queue, REQ_OP_DRV_IN, 0);
 #elif LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
-    req = blk_get_request(disk->queue, REQ_OP_DRV_IN, GFP_KERNEL);
+    req           = blk_get_request(disk->queue, REQ_OP_DRV_IN, GFP_KERNEL);
 #else
-    req           = blk_get_request(disk->queue, READ, GFP_KERNEL);
+    req = blk_get_request(disk->queue, READ, GFP_KERNEL);
 #endif
 
     if (IS_ERR(req))
@@ -583,7 +585,11 @@ static int kbdus_device_ioctl_submit_and_await_(
 
     // put request
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 16, 0)
+    blk_mq_free_request(req);
+#else
     blk_put_request(req);
+#endif
 
     // copy argument buffer to user space and free it (if applicable)
 
@@ -601,7 +607,11 @@ static int kbdus_device_ioctl_submit_and_await_(
     goto out;
 
 out_put_request:
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 16, 0)
+    blk_mq_free_request(req);
+#else
     blk_put_request(req);
+#endif
 out:
     return ret;
 }
