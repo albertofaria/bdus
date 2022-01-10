@@ -93,7 +93,7 @@ In summary, block device drivers may receive requests of the following types:
 #. *Secure erase* -- discard a range of data, ensuring that it can't be read back;
 #. *ioctl* -- perform some arbitrary, driver-specific action.
 
-There also a few request types dedicated to the management of `zoned devices <https://zonedstorage.io/introduction/zoned-storage/>`_.
+There also a few request types dedicated to the management of `zoned devices <https://zonedstorage.io/docs/introduction/zoned-storage>`_.
 We do not discuss these here as BDUS does not currently support this type of device.
 
 .. .......................................................................... ..
